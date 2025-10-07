@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "buildCommand": "cd attendance-frontend && npm run build",
+  "outputDirectory": "attendance-frontend/build",
+  "installCommand": "cd attendance-frontend && npm install",
+  "framework": "create-react-app"
+}
