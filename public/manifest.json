@@ -1,0 +1,9 @@
+{
+  "short_name": "Attendance System",
+  "name": "Face Recognition Attendance System",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff"
+}
