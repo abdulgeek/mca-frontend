@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, EnrollStudentRequest, MarkAttendanceRequest, DashboardStats, Attendance, LoginStatusResponse, AbsentStudent } from '../types';
+import { ApiResponse, EnrollStudentRequest, MarkAttendanceRequest, DashboardStats, Attendance, LoginStatusResponse, AbsentStudent, FingerprintData } from '../types';
 
 class ApiService {
   private api: AxiosInstance;
@@ -100,6 +100,39 @@ class ApiService {
       if (date) params.append('date', date);
       
       const response = await this.api.get(`/face-recognition/absent-students?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Fingerprint APIs
+  async generateChallenge(): Promise<ApiResponse<{ challenge: string }>> {
+    try {
+      const response = await this.api.get('/fingerprint/challenge');
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async markAttendanceWithFingerprint(data: {
+    fingerprintData: FingerprintData;
+    location?: string;
+    notes?: string;
+    action?: 'auto' | 'login' | 'logout';
+  }): Promise<ApiResponse> {
+    try {
+      const response = await this.api.post('/fingerprint/mark-attendance', data);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async checkLoginStatusWithFingerprint(fingerprintData: FingerprintData): Promise<ApiResponse<LoginStatusResponse>> {
+    try {
+      const response = await this.api.post('/fingerprint/check-status', { fingerprintData });
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);

@@ -10,9 +10,12 @@ import {
     TrendingUp,
     Play,
     Pause,
+    Fingerprint,
+    Camera,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFaceRecognition } from '../hooks/useFaceRecognition';
+import { FingerprintService } from '../services/fingerprintService';
 import { apiService } from '../services/api';
 import { AttendanceResult, LoginStatusResponse } from '../types';
 import { toast } from 'react-toastify';
@@ -22,6 +25,8 @@ const SmartAttendance: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [lastResult, setLastResult] = useState<AttendanceResult | null>(null);
     const [elapsedTime, setElapsedTime] = useState('0h 0m');
+    const [biometricMethod, setBiometricMethod] = useState<'face' | 'fingerprint'>('face');
+    const [isFingerprintSupported, setIsFingerprintSupported] = useState(false);
     const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const {
@@ -75,15 +80,24 @@ const SmartAttendance: React.FC = () => {
         }
     }, [cameraState.isActive, captureFrame]);
 
-    // Load models on mount
+    // Load models on mount and check fingerprint support
     useEffect(() => {
-        startCamera();
+        const checkFingerprint = async () => {
+            const supported = await FingerprintService.isPlatformAuthenticatorAvailable();
+            setIsFingerprintSupported(supported);
+        };
+
+        checkFingerprint();
+
+        if (biometricMethod === 'face') {
+            startCamera();
+        }
 
         return () => {
             stopCamera();
             if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
         };
-    }, [startCamera, stopCamera]);
+    }, [startCamera, stopCamera, biometricMethod]);
 
     // Update elapsed time for logged-in users
     useEffect(() => {
@@ -110,25 +124,45 @@ const SmartAttendance: React.FC = () => {
 
     // Smart login/logout action - ONE CLICK!
     const handleSmartAction = useCallback(async () => {
-        if (isProcessing || !cameraState.isActive) return;
+        if (isProcessing) return;
+
+        // For face recognition, check camera is active
+        if (biometricMethod === 'face' && !cameraState.isActive) {
+            toast.error('Please start the camera first');
+            return;
+        }
 
         setIsProcessing(true);
         setLastResult(null);
 
         try {
-            const imageData = captureFrame();
+            let response;
 
-            if (!imageData) {
-                toast.error('Failed to capture image. Please try again.');
-                setIsProcessing(false);
-                return;
+            if (biometricMethod === 'face') {
+                const imageData = captureFrame();
+
+                if (!imageData) {
+                    toast.error('Failed to capture image. Please try again.');
+                    setIsProcessing(false);
+                    return;
+                }
+
+                // Call the intelligent API that auto-detects login/logout
+                response = await apiService.markAttendance({
+                    faceImage: imageData,
+                    biometricMethod: 'face',
+                    action: 'auto' // Let backend decide
+                });
+            } else {
+                // Fingerprint authentication
+                toast.info('Place your finger on the sensor...');
+                const fingerprintData = await FingerprintService.authenticateFingerprint();
+
+                response = await apiService.markAttendanceWithFingerprint({
+                    fingerprintData,
+                    action: 'auto'
+                });
             }
-
-            // Call the intelligent API that auto-detects login/logout
-            const response = await apiService.markAttendance({
-                faceImage: imageData,
-                action: 'auto' // Let backend decide
-            });
 
             if (response.success && response.data) {
                 setLastResult(response.data);
@@ -197,7 +231,7 @@ const SmartAttendance: React.FC = () => {
         } finally {
             setIsProcessing(false);
         }
-    }, [isProcessing, cameraState.isActive, captureFrame]);
+    }, [isProcessing, biometricMethod, cameraState.isActive, captureFrame]);
 
     const formatTime = (dateString?: string) => {
         if (!dateString) return 'N/A';
@@ -222,7 +256,83 @@ const SmartAttendance: React.FC = () => {
                     <h1 className="mb-3 text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-purple-200">
                         Smart Attendance System
                     </h1>
-                    <p className="text-xl text-white/70">One-click login & logout with face recognition</p>
+                    <p className="text-xl text-white/70">One-click login & logout with biometric authentication</p>
+                </motion.div>
+
+                {/* Biometric Method Selection */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-8"
+                >
+                    <div className="relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-2xl"></div>
+                        <div className="relative p-6 border rounded-2xl backdrop-blur-sm bg-white/10 border-white/20 shadow-2xl">
+                            <div className="flex gap-3 items-center mb-4">
+                                <User className="w-5 h-5 text-white" />
+                                <h3 className="text-lg font-semibold text-white">Choose Authentication Method</h3>
+                            </div>
+
+                            <div className="flex flex-wrap gap-4">
+                                {/* Face Recognition Option */}
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => {
+                                        setBiometricMethod('face');
+                                        startCamera();
+                                        toast.success('Switched to Face Recognition 👤');
+                                    }}
+                                    className={`flex-1 min-w-[200px] p-4 rounded-xl border-2 transition-all duration-300 ${biometricMethod === 'face'
+                                            ? 'bg-blue-500/30 border-blue-400 shadow-lg shadow-blue-500/30'
+                                            : 'bg-white/5 border-white/20 hover:bg-white/10'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Camera className="w-6 h-6 text-white" />
+                                        <div className="text-left">
+                                            <h4 className="font-bold text-white">Face Recognition</h4>
+                                            <p className="text-sm text-white/70">Use camera</p>
+                                        </div>
+                                        {biometricMethod === 'face' && (
+                                            <CheckCircle className="w-5 h-5 text-green-400 ml-auto" />
+                                        )}
+                                    </div>
+                                </motion.button>
+
+                                {/* Fingerprint Option */}
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => {
+                                        if (isFingerprintSupported) {
+                                            setBiometricMethod('fingerprint');
+                                            stopCamera();
+                                            toast.success('Switched to Fingerprint 👆');
+                                        }
+                                    }}
+                                    disabled={!isFingerprintSupported}
+                                    className={`flex-1 min-w-[200px] p-4 rounded-xl border-2 transition-all duration-300 ${biometricMethod === 'fingerprint'
+                                            ? 'bg-purple-500/30 border-purple-400 shadow-lg shadow-purple-500/30'
+                                            : 'bg-white/5 border-white/20 hover:bg-white/10'
+                                        } ${!isFingerprintSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Fingerprint className="w-6 h-6 text-white" />
+                                        <div className="text-left">
+                                            <h4 className="font-bold text-white">Fingerprint</h4>
+                                            <p className="text-sm text-white/70">
+                                                {isFingerprintSupported ? 'Touch sensor' : 'Not available'}
+                                            </p>
+                                        </div>
+                                        {biometricMethod === 'fingerprint' && (
+                                            <CheckCircle className="w-5 h-5 text-green-400 ml-auto" />
+                                        )}
+                                    </div>
+                                </motion.button>
+                            </div>
+                        </div>
+                    </div>
                 </motion.div>
 
                 {/* Main Content */}
@@ -236,17 +346,27 @@ const SmartAttendance: React.FC = () => {
                         <div className="overflow-hidden relative">
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-3xl"></div>
                             <div className="relative p-8 border rounded-3xl backdrop-blur-sm bg-white/10 border-white/20 shadow-2xl">
-                                {/* Camera Feed */}
+                                {/* Camera Feed or Fingerprint Display */}
                                 <div className="relative mb-6">
                                     <div className="overflow-hidden relative rounded-2xl border-2 aspect-video bg-black/30 border-white/20 shadow-xl">
-                                        <video
-                                            ref={videoRef}
-                                            autoPlay
-                                            muted
-                                            playsInline
-                                            className="object-cover w-full h-full"
-                                        />
-                                        <canvas ref={canvasRef} className="hidden" />
+                                        {biometricMethod === 'face' ? (
+                                            <>
+                                                <video
+                                                    ref={videoRef}
+                                                    autoPlay
+                                                    muted
+                                                    playsInline
+                                                    className="object-cover w-full h-full"
+                                                />
+                                                <canvas ref={canvasRef} className="hidden" />
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full gap-4 p-8 bg-gradient-to-br from-purple-900/50 to-pink-900/50">
+                                                <Fingerprint className="w-32 h-32 text-white/50 animate-pulse" />
+                                                <p className="text-xl font-bold text-white">Fingerprint Mode</p>
+                                                <p className="text-sm text-center text-white/70">Click the button below to authenticate</p>
+                                            </div>
+                                        )}
 
                                         {/* Processing Overlay */}
                                         {isProcessing && (
@@ -270,46 +390,52 @@ const SmartAttendance: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Camera Controls */}
-                                <div className="flex gap-3 mb-6">
-                                    <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={cameraState.isActive ? stopCamera : startCamera}
-                                        disabled={!modelsLoaded}
-                                        className="flex gap-2 items-center px-4 py-3 text-white border rounded-xl backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/20 disabled:opacity-50"
-                                    >
-                                        {cameraState.isActive ? (
-                                            <>
-                                                <Pause className="w-4 h-4" />
-                                                <span className="font-medium">Stop Camera</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Play className="w-4 h-4" />
-                                                <span className="font-medium">Start Camera</span>
-                                            </>
-                                        )}
-                                    </motion.button>
+                                {/* Camera Controls - Only show for face recognition */}
+                                {biometricMethod === 'face' && (
+                                    <div className="flex gap-3 mb-6">
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={cameraState.isActive ? stopCamera : startCamera}
+                                            disabled={!modelsLoaded}
+                                            className="flex gap-2 items-center px-4 py-3 text-white border rounded-xl backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/20 disabled:opacity-50"
+                                        >
+                                            {cameraState.isActive ? (
+                                                <>
+                                                    <Pause className="w-4 h-4" />
+                                                    <span className="font-medium">Stop Camera</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Play className="w-4 h-4" />
+                                                    <span className="font-medium">Start Camera</span>
+                                                </>
+                                            )}
+                                        </motion.button>
 
-                                    <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={checkLoginStatus}
-                                        disabled={!cameraState.isActive || isProcessing}
-                                        className="flex flex-1 gap-2 justify-center items-center px-4 py-3 text-white border rounded-xl backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/20 disabled:opacity-50"
-                                    >
-                                        <User className="w-4 h-4" />
-                                        <span className="font-medium">Check Status</span>
-                                    </motion.button>
-                                </div>
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={checkLoginStatus}
+                                            disabled={!cameraState.isActive || isProcessing}
+                                            className="flex flex-1 gap-2 justify-center items-center px-4 py-3 text-white border rounded-xl backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/20 disabled:opacity-50"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            <span className="font-medium">Check Status</span>
+                                        </motion.button>
+                                    </div>
+                                )}
 
                                 {/* MAIN ACTION BUTTON - ONE CLICK! */}
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleSmartAction}
-                                    disabled={!cameraState.isActive || isProcessing}
+                                    disabled={
+                                        isProcessing ||
+                                        (biometricMethod === 'face' && !cameraState.isActive) ||
+                                        (biometricMethod === 'fingerprint' && !isFingerprintSupported)
+                                    }
                                     className={`flex gap-4 justify-center items-center px-8 py-6 w-full text-xl font-bold text-white rounded-2xl shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${currentStatus?.isLoggedIn
                                         ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
                                         : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
@@ -324,11 +450,15 @@ const SmartAttendance: React.FC = () => {
                                         <>
                                             <LogOut className="w-7 h-7" />
                                             Logout Now
+                                            {biometricMethod === 'fingerprint' && <Fingerprint className="w-6 h-6" />}
+                                            {biometricMethod === 'face' && <Camera className="w-6 h-6" />}
                                         </>
                                     ) : (
                                         <>
                                             <LogIn className="w-7 h-7" />
                                             Login Now
+                                            {biometricMethod === 'fingerprint' && <Fingerprint className="w-6 h-6" />}
+                                            {biometricMethod === 'face' && <Camera className="w-6 h-6" />}
                                         </>
                                     )}
                                 </motion.button>

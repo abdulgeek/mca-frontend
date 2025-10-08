@@ -5,9 +5,13 @@ export interface Student {
   email: string;
   phone: string;
   course: string;
-  faceDescriptor: number[];
-  faceImage: string;
+  faceDescriptor?: number[];
+  faceImage?: string;
   profileImageUrl?: string; // S3 URL for profile image
+  fingerprintCredentialId?: string;
+  fingerprintPublicKey?: string;
+  fingerprintCounter?: number;
+  biometricMethods: ('face' | 'fingerprint')[];
   isActive: boolean;
   enrolledAt: string;
   createdAt: string;
@@ -22,7 +26,8 @@ export interface Attendance {
   timeIn: string;
   timeOut?: string;
   status: 'present' | 'absent';
-  confidence: number;
+  confidence?: number;
+  biometricMethod: 'face' | 'fingerprint';
   location: string;
   loginPhotoUrl?: string; // S3 URL for login photo
   logoutPhotoUrl?: string; // S3 URL for logout photo
@@ -81,12 +86,23 @@ export interface DashboardStats {
   weeklyTrend: WeeklyTrendData[];
 }
 
+export interface FingerprintData {
+  credentialId: string;
+  publicKey: string;
+  counter: number;
+  authenticatorData?: string;
+  clientDataJSON?: string;
+  signature?: string;
+  userHandle?: string;
+}
+
 export interface EnrollStudentRequest {
   name: string;
   email: string;
   phone: string;
   course: string;
-  faceImage: string;
+  faceImage?: string;
+  fingerprintData?: FingerprintData;
 }
 
 export interface AbsentStudent {
@@ -101,7 +117,9 @@ export interface AbsentStudent {
 }
 
 export interface MarkAttendanceRequest {
-  faceImage: string;
+  faceImage?: string;
+  fingerprintData?: FingerprintData;
+  biometricMethod: 'face' | 'fingerprint';
   location?: string;
   notes?: string;
   action?: 'auto' | 'login' | 'logout';
