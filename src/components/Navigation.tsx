@@ -8,7 +8,6 @@ import {
   Shield,
   Scan,
   UserPlus,
-  Heart,
 } from 'lucide-react';
 
 const Navigation: React.FC = () => {
@@ -18,7 +17,6 @@ const Navigation: React.FC = () => {
     { path: '/', label: 'Attendance', icon: Scan },
     { path: '/enroll', label: 'Enrollment', icon: UserPlus },
     { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/health', label: 'Health', icon: Heart },
   ];
 
   return (

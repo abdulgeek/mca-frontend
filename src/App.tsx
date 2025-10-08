@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import SmartAttendance from './components/SmartAttendance';
 import Enrollment from './components/Enrollment';
 import Dashboard from './components/Dashboard';
-import Health from './components/Health';
 import Navigation from './components/Navigation';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -38,7 +37,6 @@ const App: React.FC = () => {
               <Route path="/" element={<SmartAttendance />} />
               <Route path="/enroll" element={<Enrollment />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/health" element={<Health />} />
             </Routes>
           </motion.main>
 
