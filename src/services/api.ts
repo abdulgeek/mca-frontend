@@ -1,5 +1,20 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { ApiResponse, EnrollStudentRequest, MarkAttendanceRequest, DashboardStats, Attendance, LoginStatusResponse, AbsentStudent, FingerprintData } from '../types';
+import { 
+  ApiResponse, 
+  EnrollStudentRequest, 
+  MarkAttendanceRequest, 
+  DashboardStats, 
+  Attendance, 
+  LoginStatusResponse, 
+  AbsentStudent, 
+  FingerprintData,
+  StudentListResponse,
+  StudentDetail,
+  UpdateStudentData,
+  UpdateBiometricsData,
+  AttendanceCalendarDay,
+  UpdateAttendanceData
+} from '../types';
 
 class ApiService {
   private api: AxiosInstance;
@@ -143,6 +158,102 @@ class ApiService {
   async healthCheck(): Promise<ApiResponse> {
     try {
       const response = await this.api.get('/health');
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Student Management APIs
+  async getAllStudents(params?: {
+    search?: string;
+    course?: string;
+    status?: string;
+    biometricMethod?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: string;
+  }): Promise<ApiResponse<StudentListResponse>> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.search) queryParams.append('search', params.search);
+      if (params?.course) queryParams.append('course', params.course);
+      if (params?.status) queryParams.append('status', params.status);
+      if (params?.biometricMethod) queryParams.append('biometricMethod', params.biometricMethod);
+      if (params?.page) queryParams.append('page', params.page.toString());
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
+      if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+      const response = await this.api.get(`/students?${queryParams.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getStudentById(id: string): Promise<ApiResponse<StudentDetail>> {
+    try {
+      const response = await this.api.get(`/students/${id}`);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateStudent(id: string, data: UpdateStudentData): Promise<ApiResponse> {
+    try {
+      const response = await this.api.put(`/students/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateStudentBiometrics(id: string, data: UpdateBiometricsData): Promise<ApiResponse> {
+    try {
+      const response = await this.api.put(`/students/${id}/biometrics`, data);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async toggleStudentStatus(id: string): Promise<ApiResponse> {
+    try {
+      const response = await this.api.patch(`/students/${id}/status`);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getStudentCalendar(id: string, startDate?: string, endDate?: string): Promise<ApiResponse<AttendanceCalendarDay[]>> {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+
+      const response = await this.api.get(`/students/${id}/calendar?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateAttendanceRecord(id: string, data: UpdateAttendanceData): Promise<ApiResponse> {
+    try {
+      const response = await this.api.put(`/students/attendance/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteAttendanceRecord(id: string): Promise<ApiResponse> {
+    try {
+      const response = await this.api.delete(`/students/attendance/${id}`);
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);

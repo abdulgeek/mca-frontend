@@ -166,3 +166,74 @@ export interface RecentAttendance {
   status: string;
   confidence: number;
 }
+
+// Student Management Types
+export interface PaginationMetadata {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface StudentListItem {
+  _id: string;
+  studentId: string;
+  name: string;
+  email: string;
+  phone: string;
+  course: string;
+  profileImageUrl?: string;
+  biometricMethods: ('face' | 'fingerprint')[];
+  isActive: boolean;
+  enrolledAt: string;
+  attendancePercentage: number;
+}
+
+export interface StudentListResponse {
+  students: StudentListItem[];
+  pagination: PaginationMetadata;
+}
+
+export interface AttendanceStats {
+  totalDays: number;
+  presentDays: number;
+  absentDays: number;
+  attendancePercentage: number;
+}
+
+export interface StudentDetail {
+  student: Student;
+  attendanceStats: AttendanceStats;
+}
+
+export interface UpdateStudentData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  course?: string;
+}
+
+export interface UpdateBiometricsData {
+  faceImage?: string;
+  fingerprintData?: FingerprintData;
+}
+
+export interface AttendanceCalendarDay {
+  date: string;
+  status: 'present' | 'absent' | 'none';
+  timeIn?: string;
+  timeOut?: string;
+  duration?: number;
+  location?: string;
+  biometricMethod?: 'face' | 'fingerprint';
+  confidence?: number;
+  attendanceId?: string;
+}
+
+export interface UpdateAttendanceData {
+  status?: 'present' | 'absent';
+  timeIn?: string;
+  timeOut?: string;
+  location?: string;
+  notes?: string;
+}

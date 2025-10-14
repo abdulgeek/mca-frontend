@@ -17,6 +17,7 @@ const Navigation: React.FC = () => {
     { path: '/', label: 'Attendance', icon: Scan },
     { path: '/enroll', label: 'Enrollment', icon: UserPlus },
     { path: '/dashboard', label: 'Dashboard', icon: Home },
+    { path: '/students', label: 'Students', icon: Shield },
   ];
 
   return (
@@ -43,7 +44,7 @@ const Navigation: React.FC = () => {
             </motion.div>
             <div>
               <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-200">
-                Attendance System
+                MCA
               </h1>
             </div>
           </Link>
