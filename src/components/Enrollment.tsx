@@ -27,7 +27,8 @@ const AVAILABLE_COURSES = [
     '6th Standard', '7th Standard', '8th Standard', '9th Standard', '10th Standard',
     '1st PUC - Science', '1st PUC - Commerce',
     '2nd PUC - Science', '2nd PUC - Commerce',
-    'Degree - MCA', 'Degree - BCA', 'Degree - B.Com', 'Degree - B.Sc', 'Degree - BA', 'Degree - Other'
+    'Degree - MCA', 'Degree - BCA', 'Degree - B.Com', 'Degree - B.Sc', 'Degree - BA', 'Degree - Other',
+    'DCA', 'Programming', 'DCAD'
 ];
 
 const Enrollment: React.FC = () => {
@@ -247,11 +248,11 @@ const Enrollment: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="min-h-screen bg-gradient-to-br via-purple-900 from-slate-900 to-slate-900">
             {/* Animated Background */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+            <div className="overflow-hidden absolute inset-0">
+                <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl animate-pulse bg-purple-500/15"></div>
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl animate-pulse bg-blue-500/15" style={{ animationDelay: '2s' }}></div>
             </div>
 
             <div className="relative z-10 px-6 py-8 mx-auto max-w-7xl">
@@ -273,9 +274,9 @@ const Enrollment: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"
                 >
-                    <div className="relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-2xl"></div>
-                        <div className="relative p-6 border rounded-2xl backdrop-blur-sm bg-white/10 border-white/20 shadow-2xl">
+                    <div className="overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-br rounded-2xl from-emerald-500/20 to-cyan-500/20"></div>
+                        <div className="relative p-6 rounded-2xl border shadow-2xl backdrop-blur-sm bg-white/10 border-white/20">
                             <div className="flex gap-3 items-center mb-4">
                                 <Shield className="w-5 h-5 text-white" />
                                 <h3 className="text-lg font-semibold text-white">Select Biometric Methods</h3>
@@ -293,14 +294,14 @@ const Enrollment: React.FC = () => {
                                         : 'bg-white/5 border-white/20 hover:bg-white/10'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex gap-3 items-center">
                                         <Camera className="w-6 h-6 text-white" />
                                         <div className="text-left">
                                             <h4 className="font-bold text-white">Face Recognition</h4>
                                             <p className="text-sm text-white/70">Use your camera</p>
                                         </div>
                                         {selectedBiometrics.includes('face') && (
-                                            <CheckCircle className="w-5 h-5 text-green-400 ml-auto" />
+                                            <CheckCircle className="ml-auto w-5 h-5 text-green-400" />
                                         )}
                                     </div>
                                 </motion.button>
@@ -316,7 +317,7 @@ const Enrollment: React.FC = () => {
                                         : 'bg-white/5 border-white/20 hover:bg-white/10'
                                         } ${!isFingerprintSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex gap-3 items-center">
                                         <Fingerprint className="w-6 h-6 text-white" />
                                         <div className="text-left">
                                             <h4 className="font-bold text-white">Fingerprint</h4>
@@ -325,7 +326,7 @@ const Enrollment: React.FC = () => {
                                             </p>
                                         </div>
                                         {selectedBiometrics.includes('fingerprint') && (
-                                            <CheckCircle className="w-5 h-5 text-green-400 ml-auto" />
+                                            <CheckCircle className="ml-auto w-5 h-5 text-green-400" />
                                         )}
                                     </div>
                                 </motion.button>
@@ -347,10 +348,10 @@ const Enrollment: React.FC = () => {
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="relative overflow-hidden"
+                            className="overflow-hidden relative"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-3xl"></div>
-                            <div className="relative p-8 border rounded-3xl backdrop-blur-sm bg-white/10 border-white/20 shadow-2xl">
+                            <div className="absolute inset-0 bg-gradient-to-br rounded-3xl from-indigo-500/20 to-purple-500/20"></div>
+                            <div className="relative p-8 rounded-3xl border shadow-2xl backdrop-blur-sm bg-white/10 border-white/20">
                                 <div className="flex gap-3 items-center mb-6">
                                     <Camera className="w-6 h-6 text-white" />
                                     <h3 className="text-xl font-semibold text-white">Capture Profile Photo</h3>
@@ -358,7 +359,7 @@ const Enrollment: React.FC = () => {
 
                                 {/* Camera/Preview */}
                                 <div className="relative mb-6">
-                                    <div className="overflow-hidden relative rounded-2xl border-2 aspect-video bg-black/30 border-white/20 shadow-xl">
+                                    <div className="overflow-hidden relative rounded-2xl border-2 shadow-xl aspect-video bg-black/30 border-white/20">
                                         {capturedImage ? (
                                             <img src={capturedImage} alt="Captured" className="object-cover w-full h-full" />
                                         ) : (
@@ -376,7 +377,7 @@ const Enrollment: React.FC = () => {
 
                                         {/* Camera Status Indicator */}
                                         <div className="absolute top-4 right-4">
-                                            <div className="flex gap-2 items-center px-4 py-2 border rounded-xl backdrop-blur-sm bg-black/60 border-white/20">
+                                            <div className="flex gap-2 items-center px-4 py-2 rounded-xl border backdrop-blur-sm bg-black/60 border-white/20">
                                                 <div className={`w-3 h-3 rounded-full ${cameraState.isActive ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
                                                 <span className="text-sm font-medium text-white">
                                                     {cameraState.isActive ? 'Live' : 'Offline'}
@@ -395,7 +396,7 @@ const Enrollment: React.FC = () => {
                                                 whileTap={{ scale: 0.98 }}
                                                 onClick={cameraState.isActive ? stopCamera : startCamera}
                                                 disabled={!modelsLoaded}
-                                                className="flex gap-2 items-center px-4 py-3 text-white border rounded-xl backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/20 disabled:opacity-50"
+                                                className="flex gap-2 items-center px-4 py-3 text-white rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/20 disabled:opacity-50"
                                             >
                                                 {cameraState.isActive ? (
                                                     <>
@@ -415,7 +416,7 @@ const Enrollment: React.FC = () => {
                                                 whileTap={{ scale: 0.98 }}
                                                 onClick={handleCapture}
                                                 disabled={!cameraState.isActive}
-                                                className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r rounded-xl shadow-xl transition-all duration-300 from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-xl transition-all duration-300 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <Camera className="w-5 h-5" />
                                                 Capture Photo
@@ -426,7 +427,7 @@ const Enrollment: React.FC = () => {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             onClick={handleRetake}
-                                            className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r rounded-xl shadow-xl transition-all duration-300 from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                                            className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-xl transition-all duration-300 hover:from-orange-600 hover:to-red-600"
                                         >
                                             <RefreshCw className="w-5 h-5" />
                                             Retake Photo
@@ -442,10 +443,10 @@ const Enrollment: React.FC = () => {
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="relative overflow-hidden"
+                            className="overflow-hidden relative"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-3xl"></div>
-                            <div className="relative p-8 border rounded-3xl backdrop-blur-sm bg-white/10 border-white/20 shadow-2xl">
+                            <div className="absolute inset-0 bg-gradient-to-br rounded-3xl from-purple-500/20 to-pink-500/20"></div>
+                            <div className="relative p-8 rounded-3xl border shadow-2xl backdrop-blur-sm bg-white/10 border-white/20">
                                 <div className="flex gap-3 items-center mb-6">
                                     <Fingerprint className="w-6 h-6 text-white" />
                                     <h3 className="text-xl font-semibold text-white">Fingerprint Registration</h3>
@@ -453,24 +454,24 @@ const Enrollment: React.FC = () => {
 
                                 {/* Fingerprint Status */}
                                 <div className="relative mb-6">
-                                    <div className="overflow-hidden relative rounded-2xl border-2 aspect-video bg-gradient-to-br from-purple-900/50 to-pink-900/50 border-white/20 shadow-xl flex items-center justify-center">
+                                    <div className="flex overflow-hidden relative justify-center items-center bg-gradient-to-br rounded-2xl border-2 shadow-xl aspect-video from-purple-900/50 to-pink-900/50 border-white/20">
                                         {fingerprintData ? (
-                                            <div className="flex flex-col items-center gap-4 p-8">
+                                            <div className="flex flex-col gap-4 items-center p-8">
                                                 <CheckCircle className="w-20 h-20 text-green-400 animate-pulse" />
                                                 <p className="text-xl font-bold text-white">Fingerprint Captured!</p>
-                                                <p className="text-sm text-white/70 text-center">Your fingerprint has been securely registered</p>
+                                                <p className="text-sm text-center text-white/70">Your fingerprint has been securely registered</p>
                                             </div>
                                         ) : (
-                                            <div className="flex flex-col items-center gap-4 p-8">
+                                            <div className="flex flex-col gap-4 items-center p-8">
                                                 <Fingerprint className="w-20 h-20 text-white/50" />
                                                 <p className="text-lg font-semibold text-white">Ready to Capture</p>
-                                                <p className="text-sm text-white/60 text-center">Click the button below to register your fingerprint</p>
+                                                <p className="text-sm text-center text-white/60">Click the button below to register your fingerprint</p>
                                             </div>
                                         )}
 
                                         {/* Status Indicator */}
                                         <div className="absolute top-4 right-4">
-                                            <div className="flex gap-2 items-center px-4 py-2 border rounded-xl backdrop-blur-sm bg-black/60 border-white/20">
+                                            <div className="flex gap-2 items-center px-4 py-2 rounded-xl border backdrop-blur-sm bg-black/60 border-white/20">
                                                 <div className={`w-3 h-3 rounded-full ${fingerprintData ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
                                                 <span className="text-sm font-medium text-white">
                                                     {fingerprintData ? 'Captured' : 'Pending'}
@@ -488,7 +489,7 @@ const Enrollment: React.FC = () => {
                                             whileTap={{ scale: 0.98 }}
                                             onClick={handleCaptureFingerprint}
                                             disabled={!formData.name || !formData.email}
-                                            className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r rounded-xl shadow-xl transition-all duration-300 from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-xl transition-all duration-300 hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Fingerprint className="w-5 h-5" />
                                             Register Fingerprint
@@ -498,7 +499,7 @@ const Enrollment: React.FC = () => {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             onClick={handleRetakeFingerprint}
-                                            className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r rounded-xl shadow-xl transition-all duration-300 from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                                            className="flex flex-1 gap-2 justify-center items-center px-6 py-3 font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-xl transition-all duration-300 hover:from-orange-600 hover:to-red-600"
                                         >
                                             <RefreshCw className="w-5 h-5" />
                                             Re-register Fingerprint
@@ -519,10 +520,10 @@ const Enrollment: React.FC = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="relative overflow-hidden"
+                        className="overflow-hidden relative"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-3xl"></div>
-                        <div className="relative p-8 border rounded-3xl backdrop-blur-sm bg-white/10 border-white/20 shadow-2xl">
+                        <div className="absolute inset-0 bg-gradient-to-br rounded-3xl from-blue-500/20 to-cyan-500/20"></div>
+                        <div className="relative p-8 rounded-3xl border shadow-2xl backdrop-blur-sm bg-white/10 border-white/20">
                             <div className="flex gap-3 items-center mb-6">
                                 <UserPlus className="w-6 h-6 text-white" />
                                 <h3 className="text-xl font-semibold text-white">Student Information</h3>
@@ -541,7 +542,7 @@ const Enrollment: React.FC = () => {
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         required
-                                        className="px-4 py-3 w-full text-white placeholder-white/50 rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
+                                        className="px-4 py-3 w-full text-white rounded-xl border backdrop-blur-sm transition-all duration-300 placeholder-white/50 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
                                         placeholder="Enter your full name"
                                     />
                                 </div>
@@ -558,7 +559,7 @@ const Enrollment: React.FC = () => {
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         required
-                                        className="px-4 py-3 w-full text-white placeholder-white/50 rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
+                                        className="px-4 py-3 w-full text-white rounded-xl border backdrop-blur-sm transition-all duration-300 placeholder-white/50 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
                                         placeholder="your.email@example.com"
                                     />
                                 </div>
@@ -575,7 +576,7 @@ const Enrollment: React.FC = () => {
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         required
-                                        className="px-4 py-3 w-full text-white placeholder-white/50 rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
+                                        className="px-4 py-3 w-full text-white rounded-xl border backdrop-blur-sm transition-all duration-300 placeholder-white/50 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
                                         placeholder="+91 9876543210"
                                     />
                                 </div>
@@ -612,7 +613,7 @@ const Enrollment: React.FC = () => {
                                         (selectedBiometrics.includes('face') && !capturedImage) ||
                                         (selectedBiometrics.includes('fingerprint') && !fingerprintData)
                                     }
-                                    className="flex gap-3 justify-center items-center px-8 py-4 w-full text-xl font-bold text-white bg-gradient-to-r rounded-xl shadow-xl transition-all duration-300 from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex gap-3 justify-center items-center px-8 py-4 w-full text-xl font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow-xl transition-all duration-300 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isEnrolling ? (
                                         <>
@@ -657,10 +658,10 @@ const Enrollment: React.FC = () => {
                                                     </p>
                                                 )}
                                                 {enrollmentResult.biometricMethods && enrollmentResult.biometricMethods.length > 0 && (
-                                                    <div className="mt-3 flex gap-2 items-center">
+                                                    <div className="flex gap-2 items-center mt-3">
                                                         <span className="text-sm text-white/70">Enrolled with:</span>
                                                         {enrollmentResult.biometricMethods.map((method: string) => (
-                                                            <span key={method} className="px-2 py-1 text-xs font-medium rounded-lg bg-white/20 text-white">
+                                                            <span key={method} className="px-2 py-1 text-xs font-medium text-white rounded-lg bg-white/20">
                                                                 {method === 'face' ? '👤 Face' : '👆 Fingerprint'}
                                                             </span>
                                                         ))}

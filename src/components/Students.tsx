@@ -26,7 +26,8 @@ const COURSES = [
     '6th Standard', '7th Standard', '8th Standard', '9th Standard', '10th Standard',
     '1st PUC - Science', '1st PUC - Commerce',
     '2nd PUC - Science', '2nd PUC - Commerce',
-    'Degree - MCA', 'Degree - BCA', 'Degree - B.Com', 'Degree - B.Sc', 'Degree - BA', 'Degree - Other'
+    'Degree - MCA', 'Degree - BCA', 'Degree - B.Com', 'Degree - B.Sc', 'Degree - BA', 'Degree - Other',
+    'DCA', 'Programming', 'DCAD'
 ];
 
 const Students: React.FC = () => {
@@ -253,7 +254,7 @@ const Students: React.FC = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => navigate('/enroll')}
-                                className="inline-flex gap-2 items-center px-6 py-2 font-semibold text-white bg-gradient-to-r rounded-xl shadow-lg transition-all duration-300 from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                                className="inline-flex gap-2 items-center px-6 py-2 font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-lg transition-all duration-300 hover:from-blue-600 hover:to-purple-600"
                             >
                                 <Plus className="w-5 h-5" />
                                 Add Student
@@ -344,7 +345,7 @@ const Students: React.FC = () => {
                                             setSearchTerm(e.target.value);
                                             setCurrentPage(1);
                                         }}
-                                        className="py-3 pr-4 pl-10 w-full text-white rounded-lg border transition-all backdrop-blur-sm placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                        className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
                                     />
                                 </div>
                             </div>
@@ -356,7 +357,7 @@ const Students: React.FC = () => {
                                     setSelectedCourse(e.target.value);
                                     setCurrentPage(1);
                                 }}
-                                className="px-4 py-3 text-white rounded-lg border transition-all backdrop-blur-sm bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                className="px-4 py-3 text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
                             >
                                 <option value="">All Courses</option>
                                 {COURSES.map(course => (
@@ -370,7 +371,7 @@ const Students: React.FC = () => {
                             <div className="relative">
                                 <button
                                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                                    className="inline-flex gap-2 items-center px-4 py-3 text-white rounded-lg border transition-all backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10"
+                                    className="inline-flex gap-2 items-center px-4 py-3 text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 hover:bg-white/10"
                                 >
                                     <Filter className="w-5 h-5" />
                                     Filters
@@ -383,7 +384,7 @@ const Students: React.FC = () => {
                                             initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -10 }}
-                                            className="absolute right-0 z-50 mt-2 p-4 space-y-3 rounded-xl border shadow-lg backdrop-blur-sm w-60 bg-slate-900/95 border-white/20"
+                                            className="absolute right-0 z-50 p-4 mt-2 space-y-3 w-60 rounded-xl border shadow-lg backdrop-blur-sm bg-slate-900/95 border-white/20"
                                         >
                                             <div>
                                                 <label className="block mb-2 text-sm font-medium text-white">Status</label>
@@ -448,7 +449,7 @@ const Students: React.FC = () => {
                                             Student
                                         </th>
                                         <th
-                                            className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-white uppercase cursor-pointer hover:text-blue-300 transition-colors"
+                                            className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-white uppercase transition-colors cursor-pointer hover:text-blue-300"
                                             onClick={() => handleSort('studentId')}
                                         >
                                             ID {sortBy === 'studentId' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -457,7 +458,7 @@ const Students: React.FC = () => {
                                             Contact
                                         </th>
                                         <th
-                                            className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-white uppercase cursor-pointer hover:text-blue-300 transition-colors"
+                                            className="px-6 py-4 text-xs font-semibold tracking-wider text-left text-white uppercase transition-colors cursor-pointer hover:text-blue-300"
                                             onClick={() => handleSort('course')}
                                         >
                                             Course {sortBy === 'course' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -505,7 +506,7 @@ const Students: React.FC = () => {
                                                                     className="object-cover w-10 h-10 rounded-full ring-2 ring-white/20"
                                                                 />
                                                             ) : (
-                                                                <div className="flex justify-center items-center w-10 h-10 font-semibold text-white bg-gradient-to-br rounded-full from-blue-500 to-purple-500">
+                                                                <div className="flex justify-center items-center w-10 h-10 font-semibold text-white bg-gradient-to-br from-blue-500 to-purple-500 rounded-full">
                                                                     {student.name.charAt(0)}
                                                                 </div>
                                                             )}
@@ -514,14 +515,14 @@ const Students: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-white/70 whitespace-nowrap">
+                                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-white/70">
                                                         {student.studentId}
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-white/70 whitespace-nowrap">
+                                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-white/70">
                                                         <div>{student.email}</div>
                                                         <div className="text-xs text-white/50">{student.phone}</div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-sm text-white/70 whitespace-nowrap">
+                                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-white/70">
                                                         {student.course}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -542,7 +543,7 @@ const Students: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4 text-sm font-medium text-white whitespace-nowrap">
                                                         <div className="flex gap-2 items-center">
-                                                            <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
+                                                            <div className="overflow-hidden w-16 h-2 rounded-full bg-white/10">
                                                                 <div
                                                                     className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
                                                                     style={{ width: `${student.attendancePercentage}%` }}
@@ -598,7 +599,7 @@ const Students: React.FC = () => {
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="p-2 text-white rounded-lg border transition-colors backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="p-2 text-white rounded-lg border backdrop-blur-sm transition-colors bg-white/5 border-white/10 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ChevronLeft className="w-5 h-5" />
                                     </motion.button>
@@ -637,7 +638,7 @@ const Students: React.FC = () => {
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === totalPages}
-                                        className="p-2 text-white rounded-lg border transition-colors backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="p-2 text-white rounded-lg border backdrop-blur-sm transition-colors bg-white/5 border-white/10 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ChevronRight className="w-5 h-5" />
                                     </motion.button>

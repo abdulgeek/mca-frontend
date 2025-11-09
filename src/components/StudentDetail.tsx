@@ -13,7 +13,9 @@ import {
     UserCheck,
     RefreshCw,
     ScanFace,
-    Fingerprint
+    Fingerprint,
+    ZoomIn,
+    Download
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { apiService } from '../services/api';
@@ -35,6 +37,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
     const [loading, setLoading] = useState(true);
     const [loadingCalendar, setLoadingCalendar] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showImageViewer, setShowImageViewer] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     useEffect(() => {
@@ -134,6 +137,10 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
 
         const duration = day.duration ? formatDuration(day.duration) : 'N/A';
 
+        // Use the status from the data as primary source
+        // If status is explicitly 'absent', show as absent (even if timeIn exists)
+        const actualStatus = day.status || (day.timeIn ? 'present' : 'absent');
+
         toast.info(
             <div>
                 <p className="font-semibold">{new Date(day.date).toLocaleDateString('en-US', {
@@ -141,7 +148,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                     day: 'numeric',
                     year: 'numeric'
                 })}</p>
-                <p className="text-sm">Status: <span className="capitalize">{day.status}</span></p>
+                <p className="text-sm">Status: <span className="capitalize">{actualStatus}</span></p>
                 <p className="text-sm">Time In: {timeIn}</p>
                 <p className="text-sm">Time Out: {timeOut}</p>
                 <p className="text-sm">Duration: {duration}</p>
@@ -165,7 +172,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex fixed inset-0 z-50 justify-center items-center p-4 bg-black/70 backdrop-blur-sm"
+                className="flex fixed inset-0 z-50 justify-center items-center p-4 backdrop-blur-sm bg-black/70"
             >
                 <div className="text-center">
                     <RefreshCw className="mx-auto mb-4 w-12 h-12 text-white animate-spin" />
@@ -192,7 +199,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="overflow-y-auto fixed inset-0 z-50 p-4 bg-black/70 backdrop-blur-sm"
+                className="overflow-y-auto fixed inset-0 z-50 p-4 backdrop-blur-sm bg-black/70"
                 onClick={onClose}
             >
                 <motion.div
@@ -216,22 +223,32 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                                 {/* Profile Image */}
                                 <div className="relative">
                                     {student.profileImageUrl ? (
-                                        <img
-                                            src={student.profileImageUrl}
-                                            alt={student.name}
-                                            className="object-cover w-24 h-24 rounded-2xl ring-4 ring-white/20"
-                                        />
+                                        <motion.div
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setShowImageViewer(true)}
+                                            className="cursor-pointer group"
+                                        >
+                                            <img
+                                                src={student.profileImageUrl}
+                                                alt={student.name}
+                                                className="object-cover w-24 h-24 rounded-2xl ring-4 transition-opacity ring-white/20 group-hover:opacity-80"
+                                            />
+                                            <div className="flex absolute inset-0 justify-center items-center rounded-2xl opacity-0 transition-opacity group-hover:opacity-100 bg-black/30">
+                                                <ZoomIn className="w-6 h-6 text-white" />
+                                            </div>
+                                        </motion.div>
                                     ) : (
-                                        <div className="flex justify-center items-center w-24 h-24 text-3xl font-bold text-white bg-gradient-to-br rounded-2xl from-blue-500 to-purple-500 ring-4 ring-white/20">
+                                        <div className="flex justify-center items-center w-24 h-24 text-3xl font-bold text-white bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl ring-4 ring-white/20">
                                             {student.name.charAt(0)}
                                         </div>
                                     )}
                                     {student.isActive ? (
-                                        <div className="absolute -bottom-2 -right-2 p-2 bg-green-500 rounded-full ring-4 ring-slate-900">
+                                        <div className="absolute -right-2 -bottom-2 p-2 bg-green-500 rounded-full ring-4 ring-slate-900">
                                             <UserCheck className="w-4 h-4 text-white" />
                                         </div>
                                     ) : (
-                                        <div className="absolute -bottom-2 -right-2 p-2 bg-red-500 rounded-full ring-4 ring-slate-900">
+                                        <div className="absolute -right-2 -bottom-2 p-2 bg-red-500 rounded-full ring-4 ring-slate-900">
                                             <UserX className="w-4 h-4 text-white" />
                                         </div>
                                     )}
@@ -299,7 +316,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                 <div className="p-4 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
                                     <div className="flex gap-3 items-center">
-                                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                                        <div className="p-2 rounded-lg bg-blue-500/20">
                                             <Mail className="w-5 h-5 text-blue-300" />
                                         </div>
                                         <div>
@@ -311,7 +328,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
 
                                 <div className="p-4 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
                                     <div className="flex gap-3 items-center">
-                                        <div className="p-2 bg-green-500/20 rounded-lg">
+                                        <div className="p-2 rounded-lg bg-green-500/20">
                                             <Phone className="w-5 h-5 text-green-300" />
                                         </div>
                                         <div>
@@ -323,7 +340,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
 
                                 <div className="p-4 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
                                     <div className="flex gap-3 items-center">
-                                        <div className="p-2 bg-purple-500/20 rounded-lg">
+                                        <div className="p-2 rounded-lg bg-purple-500/20">
                                             <BookOpen className="w-5 h-5 text-purple-300" />
                                         </div>
                                         <div>
@@ -383,10 +400,11 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                                             </Pie>
                                             <Tooltip
                                                 contentStyle={{
-                                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.3)',
                                                     borderRadius: '8px',
-                                                    color: 'white'
+                                                    color: '#1e293b',
+                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                                                 }}
                                             />
                                         </RechartsPieChart>
@@ -484,6 +502,62 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                         fetchStudentDetails();
                     }}
                 />
+            )}
+
+            {/* Image Viewer Modal */}
+            {showImageViewer && student.profileImageUrl && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[60] flex justify-center items-center p-4 backdrop-blur-md bg-black/90"
+                    onClick={() => setShowImageViewer(false)}
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative max-w-4xl max-h-[90vh] w-full"
+                    >
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setShowImageViewer(false)}
+                            className="absolute right-0 -top-12 p-2 text-white rounded-lg transition-colors hover:bg-white/20"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        {/* Image Container */}
+                        <div className="overflow-hidden relative rounded-2xl border-2 shadow-2xl border-white/20 bg-slate-900">
+                            <img
+                                src={student.profileImageUrl}
+                                alt={student.name}
+                                className="w-full h-auto max-h-[90vh] object-contain"
+                            />
+
+                            {/* Image Info Overlay */}
+                            <div className="absolute right-0 bottom-0 left-0 p-4 bg-gradient-to-t to-transparent from-black/80">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <p className="text-lg font-semibold text-white">{student.name}</p>
+                                        <p className="text-sm text-white/70">ID: {student.studentId}</p>
+                                    </div>
+                                    <motion.a
+                                        href={student.profileImageUrl}
+                                        download={`${student.name}-profile.jpg`}
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        className="p-2 text-white rounded-lg transition-colors hover:bg-white/20"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Download className="w-5 h-5" />
+                                    </motion.a>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
             )}
         </AnimatePresence>
     );

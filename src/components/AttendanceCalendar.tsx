@@ -82,7 +82,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
             case 'present':
                 return 'bg-green-500/20 border-green-500/50 text-green-300';
             case 'absent':
-                return 'bg-red-500/20 border-red-500/50 text-red-300';
+                return 'bg-red-500/40 border-red-500/70 text-red-200';
             default:
                 return 'bg-white/5 border-white/10 text-white/50';
         }
@@ -124,7 +124,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={goToToday}
-                        className="px-4 py-2 text-sm font-medium text-white rounded-lg border transition-colors backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10"
+                        className="px-4 py-2 text-sm font-medium text-white rounded-lg border backdrop-blur-sm transition-colors bg-white/5 border-white/10 hover:bg-white/10"
                     >
                         Today
                     </motion.button>
@@ -132,7 +132,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={previousMonth}
-                        className="p-2 text-white rounded-lg border transition-colors backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10"
+                        className="p-2 text-white rounded-lg border backdrop-blur-sm transition-colors bg-white/5 border-white/10 hover:bg-white/10"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </motion.button>
@@ -140,7 +140,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={nextMonth}
-                        className="p-2 text-white rounded-lg border transition-colors backdrop-blur-sm bg-white/5 border-white/10 hover:bg-white/10"
+                        className="p-2 text-white rounded-lg border backdrop-blur-sm transition-colors bg-white/5 border-white/10 hover:bg-white/10"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </motion.button>
@@ -150,15 +150,15 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
             {/* Legend */}
             <div className="flex flex-wrap gap-4 p-4 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
                 <div className="flex gap-2 items-center">
-                    <div className="w-4 h-4 bg-green-500/20 rounded border border-green-500/50"></div>
+                    <div className="w-4 h-4 rounded border bg-green-500/20 border-green-500/50"></div>
                     <span className="text-sm text-white/70">Present</span>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <div className="w-4 h-4 bg-red-500/20 rounded border border-red-500/50"></div>
+                    <div className="w-4 h-4 rounded border bg-red-500/40 border-red-500/70"></div>
                     <span className="text-sm text-white/70">Absent</span>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <div className="w-4 h-4 bg-white/5 rounded border border-white/10"></div>
+                    <div className="w-4 h-4 rounded border bg-white/5 border-white/10"></div>
                     <span className="text-sm text-white/70">No Record</span>
                 </div>
             </div>
@@ -168,7 +168,7 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                 {/* Day Names */}
                 <div className="grid grid-cols-7 gap-2 mb-4">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                        <div key={day} className="text-center text-sm font-semibold text-white/70">
+                        <div key={day} className="text-sm font-semibold text-center text-white/70">
                             {day}
                         </div>
                     ))}
@@ -182,9 +182,18 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                                 return <div key={`empty-${index}`} className="aspect-square" />;
                             }
 
-                            const dateStr = day.toISOString().split('T')[0];
+                            // Format date string consistently (YYYY-MM-DD) without timezone conversion
+                            const year = day.getFullYear();
+                            const month = String(day.getMonth() + 1).padStart(2, '0');
+                            const date = String(day.getDate()).padStart(2, '0');
+                            const dateStr = `${year}-${month}-${date}`;
                             const attendanceDay = attendanceMap.get(dateStr);
-                            const status = attendanceDay?.status || 'none';
+                            // Use the status from the data as primary source
+                            // If status is explicitly 'absent', show as absent (even if timeIn exists)
+                            // If status is 'present', show as present
+                            const status = attendanceDay
+                                ? (attendanceDay.status || (attendanceDay.timeIn ? 'present' : 'none'))
+                                : 'none';
                             const isToday = new Date().toDateString() === day.toDateString();
                             const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
 
@@ -217,8 +226,8 @@ const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
 
                                     {/* Tooltip */}
                                     {attendanceDay && status !== 'none' && (
-                                        <div className="group-hover:opacity-100 opacity-0 absolute left-1/2 top-full z-50 mt-2 transition-opacity duration-200 pointer-events-none transform -translate-x-1/2">
-                                            <div className="px-3 py-2 text-xs rounded-lg border shadow-lg backdrop-blur-sm whitespace-nowrap bg-slate-900/95 border-white/20">
+                                        <div className="absolute top-full left-1/2 z-50 mt-2 opacity-0 transition-opacity duration-200 transform -translate-x-1/2 pointer-events-none group-hover:opacity-100">
+                                            <div className="px-3 py-2 text-xs whitespace-nowrap rounded-lg border shadow-lg backdrop-blur-sm bg-slate-900/95 border-white/20">
                                                 <div className="font-semibold text-white capitalize">{status}</div>
                                                 {attendanceDay.timeIn && (
                                                     <div className="flex gap-1 items-center mt-1 text-white/70">

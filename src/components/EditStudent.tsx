@@ -18,7 +18,8 @@ const COURSES = [
     '6th Standard', '7th Standard', '8th Standard', '9th Standard', '10th Standard',
     '1st PUC - Science', '1st PUC - Commerce',
     '2nd PUC - Science', '2nd PUC - Commerce',
-    'Degree - MCA', 'Degree - BCA', 'Degree - B.Com', 'Degree - B.Sc', 'Degree - BA', 'Degree - Other'
+    'Degree - MCA', 'Degree - BCA', 'Degree - B.Com', 'Degree - B.Sc', 'Degree - BA', 'Degree - Other',
+    'DCA', 'Programming', 'DCAD'
 ];
 
 const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onSuccess }) => {
@@ -205,7 +206,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleInputChange}
-                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border transition-all backdrop-blur-sm placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
                                                 placeholder="Enter full name"
                                                 required
                                             />
@@ -224,7 +225,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleInputChange}
-                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border transition-all backdrop-blur-sm placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
                                                 placeholder="Enter email address"
                                                 required
                                             />
@@ -243,7 +244,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
-                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border transition-all backdrop-blur-sm placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
                                                 placeholder="Enter phone number"
                                                 required
                                             />
@@ -261,7 +262,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                 name="course"
                                                 value={formData.course}
                                                 onChange={handleInputChange}
-                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border transition-all backdrop-blur-sm bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
                                                 required
                                             >
                                                 {COURSES.map(course => (
@@ -288,7 +289,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                             whileTap={{ scale: 0.95 }}
                                             onClick={handleUpdateBasicInfo}
                                             disabled={updating}
-                                            className="inline-flex gap-2 items-center px-6 py-3 font-medium text-white bg-gradient-to-r rounded-xl transition-all from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="inline-flex gap-2 items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl transition-all hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Save className="w-5 h-5" />
                                             {updating ? 'Saving...' : 'Save Changes'}
@@ -339,7 +340,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                         whileHover={{ scale: 1.05 }}
                                                         whileTap={{ scale: 0.95 }}
                                                         onClick={handleStartCamera}
-                                                        className="flex-1 inline-flex gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r rounded-xl from-blue-500 to-purple-500"
+                                                        className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl"
                                                     >
                                                         <Camera className="w-5 h-5" />
                                                         Start Camera
@@ -352,7 +353,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                             whileHover={{ scale: 1.05 }}
                                                             whileTap={{ scale: 0.95 }}
                                                             onClick={handleCaptureImage}
-                                                            className="flex-1 inline-flex gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r rounded-xl from-green-500 to-emerald-500"
+                                                            className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl"
                                                         >
                                                             <Camera className="w-5 h-5" />
                                                             Capture Image
@@ -386,7 +387,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                             whileTap={{ scale: 0.95 }}
                                                             onClick={handleUpdateBiometrics}
                                                             disabled={updating}
-                                                            className="flex-1 inline-flex gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r rounded-xl from-blue-500 to-purple-500 disabled:opacity-50"
+                                                            className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl disabled:opacity-50"
                                                         >
                                                             <Save className="w-5 h-5" />
                                                             {updating ? 'Updating...' : 'Update Biometric'}

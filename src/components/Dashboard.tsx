@@ -64,7 +64,12 @@ const Dashboard: React.FC = () => {
 
       if (response.success && response.data) {
         setAbsentStudents(response.data.absentStudents);
-        if (response.data.absentStudents.length > 0) {
+        // Check if yesterday was Sunday (holiday)
+        const isHoliday = yesterday.getDay() === 0 || (response.data as any).isHoliday;
+
+        if (isHoliday) {
+          toast.info('Sunday is a holiday - no absent students');
+        } else if (response.data.absentStudents.length > 0) {
           toast.info(`Found ${response.data.absentStudents.length} absent students from yesterday`);
         }
       }
@@ -197,7 +202,7 @@ const Dashboard: React.FC = () => {
                   setShowAbsentModal(true);
                 }}
                 disabled={loadingAbsent}
-                className="inline-flex gap-3 items-center px-6 py-3 text-white bg-gradient-to-r rounded-xl shadow-lg transition-all duration-300 from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:opacity-50"
+                className="inline-flex gap-3 items-center px-6 py-3 text-white bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg transition-all duration-300 hover:from-orange-600 hover:to-red-600 disabled:opacity-50"
               >
                 {loadingAbsent ? (
                   <RefreshCw className="w-5 h-5 animate-spin" />
@@ -343,10 +348,11 @@ const Dashboard: React.FC = () => {
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
                         borderRadius: '8px',
-                        color: 'white'
+                        color: '#1e293b',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                       }}
                     />
                   </RechartsPieChart>
@@ -396,12 +402,17 @@ const Dashboard: React.FC = () => {
                       <YAxis stroke="rgba(255, 255, 255, 0.7)" />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
                           borderRadius: '8px',
-                          color: 'white'
+                          color: '#1e293b',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                         }}
-                        formatter={(value, name) => [value, name === 'present' ? 'Present' : 'Absent']}
+                        formatter={(value, name) => {
+                          // Handle both lowercase dataKey and capitalized name prop
+                          const displayName = name === 'present' || name === 'Present' ? 'Present' : 'Absent';
+                          return [value, displayName];
+                        }}
                         labelFormatter={(label) => `Day: ${label}`}
                       />
                       <Area
@@ -450,15 +461,22 @@ const Dashboard: React.FC = () => {
                 <div className="p-2 rounded-lg bg-rose-500/20">
                   <Clock className="w-6 h-6 text-rose-300" />
                 </div>
-                <h3 className="text-xl font-semibold text-white">Recent Attendance</h3>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-white">Recent Attendance</h3>
+                  {stats?.recentAttendance && stats.recentAttendance.length > 0 && (
+                    <p className="mt-1 text-sm text-white/60">
+                      Showing {stats.recentAttendance.length} record{stats.recentAttendance.length !== 1 ? 's' : ''} for today
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                 <AnimatePresence>
                   {stats?.recentAttendance && stats.recentAttendance.length > 0 ? (
                     stats.recentAttendance.map((attendance, index) => (
                       <motion.div
-                        key={index}
+                        key={attendance._id || index}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
@@ -474,7 +492,11 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-white">
-                            {new Date(attendance.timeIn).toLocaleTimeString()}
+                            {new Date(attendance.timeIn).toLocaleTimeString('en-US', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
                           </p>
                           <p className="flex gap-1 items-center text-xs capitalize text-white/70">
                             {attendance.status === 'present' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
@@ -507,7 +529,7 @@ const Dashboard: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex justify-center items-center p-4 bg-black/70 backdrop-blur-sm"
+              className="flex fixed inset-0 z-50 justify-center items-center p-4 backdrop-blur-sm bg-black/70"
               onClick={() => setShowAbsentModal(false)}
             >
               <motion.div
@@ -522,7 +544,7 @@ const Dashboard: React.FC = () => {
                   {/* Header */}
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex gap-3 items-center">
-                      <div className="p-3 bg-red-500/20 rounded-xl">
+                      <div className="p-3 rounded-xl bg-red-500/20">
                         <UserX className="w-6 h-6 text-red-300" />
                       </div>
                       <div>
@@ -544,55 +566,83 @@ const Dashboard: React.FC = () => {
                       <RefreshCw className="w-12 h-12 text-white animate-spin" />
                       <p className="text-white/70">Loading absent students...</p>
                     </div>
-                  ) : absentStudents.length === 0 ? (
-                    <div className="flex flex-col gap-3 justify-center items-center py-12 text-white/70">
-                      <CheckCircle2 className="w-16 h-16 text-green-400" />
-                      <p className="text-lg font-medium">No absent students yesterday!</p>
-                      <p className="text-sm">All students marked their attendance.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {absentStudents.map((student, index) => (
-                        <motion.div
-                          key={student._id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="flex gap-4 justify-between items-center p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/5 border-white/10 hover:bg-white/10"
-                        >
-                          <div className="flex gap-4 items-center flex-1">
-                            <div className="flex flex-col justify-center items-center p-3 bg-red-500/20 rounded-xl">
-                              <UserX className="w-6 h-6 text-red-300" />
-                            </div>
-                            <div>
-                              <p className="font-bold text-white">{student.name}</p>
-                              <p className="text-sm text-white/70">ID: {student.studentId}</p>
-                              <p className="text-sm text-white/60">{student.course}</p>
-                            </div>
+                  ) : (() => {
+                    // Check if yesterday was Sunday (holiday)
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const isHoliday = yesterday.getDay() === 0;
+
+                    if (isHoliday) {
+                      return (
+                        <div className="flex flex-col gap-3 justify-center items-center py-12 text-white/70">
+                          <div className="p-4 rounded-full bg-blue-500/20">
+                            <Clock className="w-16 h-16 text-blue-400" />
                           </div>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleWhatsAppClick(student)}
-                            className="flex gap-2 items-center px-5 py-3 font-semibold text-white bg-gradient-to-r rounded-xl shadow-lg transition-all duration-300 from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                          <p className="text-lg font-medium">Sunday is a Holiday!</p>
+                          <p className="text-sm">No attendance required on Sundays.</p>
+                        </div>
+                      );
+                    }
+
+                    if (absentStudents.length === 0) {
+                      return (
+                        <div className="flex flex-col gap-3 justify-center items-center py-12 text-white/70">
+                          <CheckCircle2 className="w-16 h-16 text-green-400" />
+                          <p className="text-lg font-medium">No absent students yesterday!</p>
+                          <p className="text-sm">All students marked their attendance.</p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-3">
+                        {absentStudents.map((student, index) => (
+                          <motion.div
+                            key={student._id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="flex gap-4 justify-between items-center p-5 rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/5 border-white/10 hover:bg-white/10"
                           >
-                            <MessageCircle className="w-5 h-5" />
-                            Send WhatsApp
-                            <ExternalLink className="w-4 h-4" />
-                          </motion.button>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
+                            <div className="flex flex-1 gap-4 items-center">
+                              <div className="flex flex-col justify-center items-center p-3 rounded-xl bg-red-500/20">
+                                <UserX className="w-6 h-6 text-red-300" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-white">{student.name}</p>
+                                <p className="text-sm text-white/70">ID: {student.studentId}</p>
+                                <p className="text-sm text-white/60">{student.course}</p>
+                              </div>
+                            </div>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleWhatsAppClick(student)}
+                              className="flex gap-2 items-center px-5 py-3 font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow-lg transition-all duration-300 hover:from-green-600 hover:to-emerald-600"
+                            >
+                              <MessageCircle className="w-5 h-5" />
+                              Send WhatsApp
+                              <ExternalLink className="w-4 h-4" />
+                            </motion.button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {/* Footer */}
-                  {absentStudents.length > 0 && (
-                    <div className="mt-6 p-4 rounded-xl border bg-white/5 border-white/10">
-                      <p className="text-sm text-white/70">
-                        💡 <strong>Tip:</strong> Click "Send WhatsApp" to open WhatsApp with a pre-filled absence notification message for each student.
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const isHoliday = yesterday.getDay() === 0;
+                    return !isHoliday && absentStudents.length > 0;
+                  })() && (
+                      <div className="p-4 mt-6 rounded-xl border bg-white/5 border-white/10">
+                        <p className="text-sm text-white/70">
+                          💡 <strong>Tip:</strong> Click "Send WhatsApp" to open WhatsApp with a pre-filled absence notification message for each student.
+                        </p>
+                      </div>
+                    )}
                 </div>
               </motion.div>
             </motion.div>
