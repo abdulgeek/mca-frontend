@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
@@ -40,20 +40,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
     const [showImageViewer, setShowImageViewer] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
-    useEffect(() => {
-        if (isOpen && studentId) {
-            fetchStudentDetails();
-            fetchCalendarData();
-        }
-    }, [isOpen, studentId]);
-
-    useEffect(() => {
-        if (isOpen && studentId) {
-            fetchCalendarData();
-        }
-    }, [currentMonth]);
-
-    const fetchStudentDetails = async () => {
+    const fetchStudentDetails = useCallback(async () => {
         try {
             setLoading(true);
             const response = await apiService.getStudentById(studentId);
@@ -78,9 +65,9 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
         } finally {
             setLoading(false);
         }
-    };
+    }, [studentId]);
 
-    const fetchCalendarData = async () => {
+    const fetchCalendarData = useCallback(async () => {
         try {
             setLoadingCalendar(true);
 
@@ -102,7 +89,20 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
         } finally {
             setLoadingCalendar(false);
         }
-    };
+    }, [studentId, currentMonth]);
+
+    useEffect(() => {
+        if (isOpen && studentId) {
+            fetchStudentDetails();
+            fetchCalendarData();
+        }
+    }, [isOpen, studentId, fetchStudentDetails, fetchCalendarData]);
+
+    useEffect(() => {
+        if (isOpen && studentId) {
+            fetchCalendarData();
+        }
+    }, [isOpen, studentId, currentMonth, fetchCalendarData]);
 
     const handleToggleStatus = async () => {
         if (!studentDetail) return;
