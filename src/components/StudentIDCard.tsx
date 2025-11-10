@@ -7,6 +7,7 @@ import { StudentIDCardPDF } from './StudentIDCardPDF';
 import axios from 'axios';
 import ceoSignature from '../assets/ceo.jpeg';
 import courseDirectorSignature from '../assets/course-director.jpeg';
+import academyLogo from '../assets/logo.webp';
 
 interface StudentIDCardProps {
     student: StudentListItem;
@@ -41,6 +42,28 @@ const StudentIDCard: FC<StudentIDCardProps> = ({
             console.error('Failed to convert image to base64:', error);
             return null;
         }
+    };
+
+    // Helper function to convert webp to PNG using canvas
+    const convertWebpToPng = async (webpDataUrl: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error('Could not get canvas context'));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+                const pngDataUrl = canvas.toDataURL('image/png');
+                resolve(pngDataUrl);
+            };
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = webpDataUrl;
+        });
     };
 
     const handlePrint = async () => {
@@ -99,6 +122,33 @@ const StudentIDCard: FC<StudentIDCardProps> = ({
                 console.log('Course Director signature converted successfully');
             }
 
+            // Convert Academy Logo to base64 and convert webp to PNG
+            let academyLogoBase64: string | undefined = undefined;
+            if (academyLogo) {
+                console.log('Converting Academy logo to base64...');
+                try {
+                    const response = await fetch(academyLogo);
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    const webpDataUrl = await new Promise<string>((resolve) => {
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.readAsDataURL(blob);
+                    });
+
+                    // Convert webp to PNG if it's webp format
+                    if (blob.type === 'image/webp' || webpDataUrl.startsWith('data:image/webp')) {
+                        console.log('Converting webp logo to PNG...');
+                        academyLogoBase64 = await convertWebpToPng(webpDataUrl);
+                        console.log('Academy logo converted to PNG successfully');
+                    } else {
+                        academyLogoBase64 = webpDataUrl;
+                        console.log('Academy logo converted successfully');
+                    }
+                } catch (error) {
+                    console.warn('Failed to convert logo, will use fallback', error);
+                }
+            }
+
             // Create student object with base64 image
             const studentWithBase64Image = {
                 ...student,
@@ -110,6 +160,7 @@ const StudentIDCard: FC<StudentIDCardProps> = ({
                     student={studentWithBase64Image}
                     ceoSignatureUrl={ceoSignatureBase64}
                     courseDirectorSignatureUrl={courseDirectorSignatureBase64}
+                    academyLogoUrl={academyLogoBase64}
                 />
             );
 
