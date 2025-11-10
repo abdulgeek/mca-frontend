@@ -54,54 +54,25 @@ const styles = StyleSheet.create({
     border: '0.5pt solid #e2e8f0',
     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
   },
-  // Gradient Header Section
-  headerGradient: {
+  // Compact Header with Photo and ID
+  compactHeader: {
     width: '100%',
-    height: '14mm',
     backgroundColor: '#667eea',
+    padding: '2.5mm',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: '2mm',
-    paddingBottom: '2mm',
-  },
-  headerPattern: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.1,
-  },
-  mcaText: {
-    fontSize: '14pt',
-    color: '#ffffff',
-    letterSpacing: '2pt',
-    fontFamily: 'Helvetica-Bold',
-    marginBottom: '1mm',
-  },
-  courseIdText: {
-    fontSize: '6pt',
-    color: '#ffffff',
-    letterSpacing: '0.5pt',
-    fontFamily: 'Helvetica-Bold',
-  },
-  // Photo Section
-  photoSection: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-    marginBottom: 3,
+    justifyContent: 'space-between',
+    borderTopLeftRadius: '6pt',
+    borderTopRightRadius: '6pt',
   },
   photoContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 50,
+    width: '13mm',
+    height: '13mm',
+    borderRadius: '2mm',
     overflow: 'hidden',
     backgroundColor: '#ffffff',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -109,9 +80,7 @@ const styles = StyleSheet.create({
   photoWrapper: {
     width: '100%',
     height: '100%',
-    borderRadius: 50,
     overflow: 'hidden',
-    aspectRatio: 1,
   },
   photo: {
     width: '100%',
@@ -119,9 +88,8 @@ const styles = StyleSheet.create({
     objectFit: 'cover',
   },
   placeholderPhoto: {
-    width: '17mm',
-    height: '17mm',
-    borderRadius: '8.5mm',
+    width: '100%',
+    height: '100%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -133,27 +101,59 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'Helvetica',
   },
-  // Content Section
-  contentSection: {
-    padding: '3mm',
-    paddingTop: '2mm',
+  headerRight: {
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'flex-end',
+    flex: 1,
+    marginLeft: '2mm',
   },
   studentIdBadge: {
-    backgroundColor: '#667eea',
-    padding: '1mm 2mm',
+    backgroundColor: '#ffffff',
+    padding: '1.5mm 3.5mm',
     borderRadius: '2pt',
-    alignSelf: 'center',
-    marginBottom: '1.5mm',
-    marginTop: '0mm',
+    marginBottom: '1mm',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mcaLabelText: {
+    fontSize: '9pt',
+    color: 'black',
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: '1.5pt',
+    marginBottom: '0.5mm',
   },
   studentIdText: {
     fontSize: '6pt',
-    color: '#ffffff',
-    fontWeight: 'bold',
+    color: 'black',
     fontFamily: 'Helvetica-Bold',
-    letterSpacing: '0.5pt',
+    letterSpacing: '0.2pt',
+  },
+  studentIdHeader: {
+    fontSize: '5.5pt',
+    color: '#ffffff',
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    maxWidth: '35mm',
+    marginBottom: '0.5mm',
+    opacity: 0.9,
+  },
+  studentNameHeader: {
+    fontSize: '7pt',
+    color: '#ffffff',
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'right',
+    maxWidth: '35mm',
+  },
+  // Content Section with Larger Fonts
+  contentSection: {
+    padding: '3mm',
+    paddingTop: '2.5mm',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
   },
   infoSection: {
     display: 'flex',
@@ -163,41 +163,50 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: '1mm',
+    marginBottom: '2mm',
   },
   infoLabel: {
-    fontSize: '4.5pt',
+    fontSize: '6pt',
     color: '#64748b',
     fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
-    letterSpacing: '0.2pt',
-    width: '16mm',
-    flexShrink: 0,
+    letterSpacing: '0.3pt',
+    marginRight: '2mm',
+    minWidth: '18mm',
   },
   infoValue: {
-    fontSize: '5.5pt',
-    color: '#0f172a',
+    fontSize: '7pt',
+    color: 'black',
     fontFamily: 'Helvetica',
     lineHeight: 1.3,
     flex: 1,
   },
-  divider: {
-    height: '0.3pt',
-    backgroundColor: '#cbd5e1',
-    marginTop: '0.3mm',
-    marginBottom: '0.7mm',
+  infoValueUppercase: {
+    fontSize: '7pt',
+    color: 'black',
+    fontFamily: 'Helvetica',
+    lineHeight: 1.3,
+    flex: 1,
+    textTransform: 'uppercase',
   },
-  // Footer Signatures
+  divider: {
+    height: '0.5pt',
+    backgroundColor: '#e2e8f0',
+    marginTop: '0.5mm',
+    marginBottom: '1.5mm',
+  },
+  // Compact Footer Signatures
   footer: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    padding: '1.5mm 3mm',
-    paddingTop: '1mm',
-    marginTop: 'auto',
+    padding: '2mm 3mm',
+    paddingTop: '1.5mm',
     borderTop: '0.5pt solid #e2e8f0',
     backgroundColor: '#f8fafc',
+    borderBottomLeftRadius: '6pt',
+    borderBottomRightRadius: '6pt',
   },
   signatureContainer: {
     display: 'flex',
@@ -206,34 +215,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   signatureImage: {
-    width: '12mm',
-    height: '5mm',
+    width: '18mm',
+    height: '7mm',
     objectFit: 'contain',
-    marginBottom: '1mm',
+    marginBottom: '0.5mm',
   },
   signatureLabel: {
-    fontSize: '4pt',
-    color: '#1e293b',
+    fontSize: '5.5pt',
+    color: 'black',
     textAlign: 'center',
-    fontWeight: 'bold',
     fontFamily: 'Helvetica-Bold',
+    lineHeight: 1.3,
     marginTop: '0.5mm',
   },
   signaturePlaceholder: {
-    width: '12mm',
-    height: '5mm',
+    width: '18mm',
+    height: '7mm',
     border: '0.5pt dashed #cbd5e1',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: '1mm',
+    marginBottom: '0.5mm',
     backgroundColor: '#ffffff',
     borderRadius: '1pt',
   },
   signaturePlaceholderText: {
-    fontSize: '3.5pt',
+    fontSize: '4pt',
     color: '#94a3b8',
     textAlign: 'center',
+    lineHeight: 1.2,
   },
 });
 
@@ -246,14 +256,8 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.cardContainer}>
-          {/* Gradient Header with MCA Text and Course ID */}
-          <View style={styles.headerGradient}>
-            <Text style={styles.mcaText}>MCA</Text>
-            <Text style={styles.courseIdText}>{student.studentId}</Text>
-          </View>
-
-          {/* Photo Section */}
-          <View style={styles.photoSection}>
+          {/* Compact Header with Photo and Student ID */}
+          <View style={styles.compactHeader}>
             <View style={styles.photoContainer}>
               {student.profileImageUrl ? (
                 <View style={styles.photoWrapper}>
@@ -269,24 +273,29 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
                 </View>
               )}
             </View>
+
+            <View style={styles.headerRight}>
+              <View style={styles.studentIdBadge}>
+                <Text style={styles.mcaLabelText}>MCA</Text>
+                <Text style={styles.studentIdText}>{student.studentId}</Text>
+              </View>
+            </View>
           </View>
 
-          {/* Content Section */}
+          {/* Content Section with Larger Fonts */}
           <View style={styles.contentSection}>
-            {/* Student Information */}
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Full Name</Text>
-                <Text style={styles.infoValue}>{student.name}</Text>
+                <Text style={styles.infoValueUppercase}>{student.name}</Text>
               </View>
-
               <View style={styles.divider} />
 
               {student.fatherName && (
                 <>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Father's Name</Text>
-                    <Text style={styles.infoValue}>{student.fatherName}</Text>
+                    <Text style={styles.infoValueUppercase}>{student.fatherName}</Text>
                   </View>
                   <View style={styles.divider} />
                 </>
@@ -296,7 +305,7 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
                 <>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Mother's Name</Text>
-                    <Text style={styles.infoValue}>{student.motherName}</Text>
+                    <Text style={styles.infoValueUppercase}>{student.motherName}</Text>
                   </View>
                   <View style={styles.divider} />
                 </>
@@ -306,14 +315,14 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
                 <>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>Blood Group</Text>
-                    <Text style={styles.infoValue}>{student.bloodGroup}</Text>
+                    <Text style={styles.infoValueUppercase}>{student.bloodGroup}</Text>
                   </View>
                   <View style={styles.divider} />
                 </>
               )}
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Email Address</Text>
+                <Text style={styles.infoLabel}>Email</Text>
                 <Text style={styles.infoValue}>{student.email}</Text>
               </View>
 
@@ -321,14 +330,14 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Course</Text>
-                <Text style={styles.infoValue}>{student.course}</Text>
+                <Text style={styles.infoValueUppercase}>{student.course}</Text>
               </View>
 
               <View style={styles.divider} />
 
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Phone Number</Text>
-                <Text style={styles.infoValue}>{student.phone}</Text>
+                <Text style={styles.infoLabel}>Phone</Text>
+                <Text style={styles.infoValueUppercase}>{student.phone}</Text>
               </View>
             </View>
           </View>
@@ -337,24 +346,34 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
           <View style={styles.footer}>
             <View style={styles.signatureContainer}>
               {ceoSignatureUrl ? (
-                <PdfImage src={ceoSignatureUrl} style={styles.signatureImage} />
+                <>
+                  <PdfImage src={ceoSignatureUrl} style={styles.signatureImage} />
+                  <Text style={styles.signatureLabel}>Managing{'\n'}Director</Text>
+                </>
               ) : (
-                <View style={styles.signaturePlaceholder}>
-                  <Text style={styles.signaturePlaceholderText}>Managing Director</Text>
-                </View>
+                <>
+                  <View style={styles.signaturePlaceholder}>
+                    <Text style={styles.signaturePlaceholderText}>Managing Director{'\n'}Signature</Text>
+                  </View>
+                  <Text style={styles.signatureLabel}>Managing{'\n'}Director</Text>
+                </>
               )}
-              <Text style={styles.signatureLabel}>Managing Director</Text>
             </View>
 
             <View style={styles.signatureContainer}>
               {courseDirectorSignatureUrl ? (
-                <PdfImage src={courseDirectorSignatureUrl} style={styles.signatureImage} />
+                <>
+                  <PdfImage src={courseDirectorSignatureUrl} style={styles.signatureImage} />
+                  <Text style={styles.signatureLabel}>Course{'\n'}Director</Text>
+                </>
               ) : (
-                <View style={styles.signaturePlaceholder}>
-                  <Text style={styles.signaturePlaceholderText}>Course Director</Text>
-                </View>
+                <>
+                  <View style={styles.signaturePlaceholder}>
+                    <Text style={styles.signaturePlaceholderText}>Course Director{'\n'}Signature</Text>
+                  </View>
+                  <Text style={styles.signatureLabel}>Course{'\n'}Director</Text>
+                </>
               )}
-              <Text style={styles.signatureLabel}>Course Director</Text>
             </View>
           </View>
         </View>
@@ -362,4 +381,5 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
     </Document>
   );
 };
+
 
