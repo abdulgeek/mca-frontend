@@ -15,7 +15,9 @@ import {
     ScanFace,
     Fingerprint,
     ZoomIn,
-    Download
+    Download,
+    User,
+    Droplet
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { apiService } from '../services/api';
@@ -349,6 +351,48 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ studentId, isOpen, onClos
                                         </div>
                                     </div>
                                 </div>
+
+                                {student.fatherName && (
+                                    <div className="p-4 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
+                                        <div className="flex gap-3 items-center">
+                                            <div className="p-2 rounded-lg bg-orange-500/20">
+                                                <User className="w-5 h-5 text-orange-300" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-white/70">Father's Name</p>
+                                                <p className="font-medium text-white">{student.fatherName}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {student.motherName && (
+                                    <div className="p-4 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
+                                        <div className="flex gap-3 items-center">
+                                            <div className="p-2 rounded-lg bg-pink-500/20">
+                                                <User className="w-5 h-5 text-pink-300" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-white/70">Mother's Name</p>
+                                                <p className="font-medium text-white">{student.motherName}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {student.bloodGroup && (
+                                    <div className="p-4 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
+                                        <div className="flex gap-3 items-center">
+                                            <div className="p-2 rounded-lg bg-red-500/20">
+                                                <Droplet className="w-5 h-5 text-red-300" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-white/70">Blood Group</p>
+                                                <p className="font-medium text-white">{student.bloodGroup}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Statistics */}

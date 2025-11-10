@@ -260,6 +260,16 @@ class ApiService {
     }
   }
 
+  // PIN Authentication API
+  async validatePin(pin: string): Promise<ApiResponse> {
+    try {
+      const response = await this.api.post('/auth/validate-pin', { pin });
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
   private handleError(error: any): Error {
     if (error.response) {
       // Server responded with error status

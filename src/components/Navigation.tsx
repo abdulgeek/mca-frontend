@@ -8,10 +8,20 @@ import {
   Shield,
   Scan,
   UserPlus,
+  LogOut,
 } from 'lucide-react';
+import { pinService } from '../services/pinService';
 
 const Navigation: React.FC = () => {
   const location = useLocation();
+
+  const handleLogout = () => {
+    // Clear PIN authentication
+    pinService.logout();
+
+    // Dispatch custom event to notify App.tsx
+    window.dispatchEvent(new CustomEvent('pin-logout'));
+  };
 
   const navItems = [
     { path: '/', label: 'Attendance', icon: Scan },
@@ -89,21 +99,37 @@ const Navigation: React.FC = () => {
             })}
           </div>
 
-          {/* Status Indicator */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex gap-3 items-center px-4 py-2 rounded-xl border backdrop-blur-sm bg-white/10 border-white/20"
-          >
-            <div className="flex gap-2 items-center">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-white">System Online</span>
-            </div>
-            <div className="flex gap-1 items-center">
-              <Shield className="w-4 h-4 text-green-500" />
-              <Zap className="w-4 h-4 text-blue-500" />
-            </div>
-          </motion.div>
+          {/* Status Indicator and Logout */}
+          <div className="flex gap-3 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex gap-3 items-center px-4 py-2 rounded-xl border backdrop-blur-sm bg-white/10 border-white/20"
+            >
+              <div className="flex gap-2 items-center">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-white">System Online</span>
+              </div>
+              <div className="flex gap-1 items-center">
+                <Shield className="w-4 h-4 text-green-500" />
+                <Zap className="w-4 h-4 text-blue-500" />
+              </div>
+            </motion.div>
+
+            {/* Logout Button */}
+            <motion.button
+              onClick={handleLogout}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex relative gap-2 items-center px-4 py-2 rounded-xl border backdrop-blur-sm transition-all duration-300 group text-white/80 hover:text-white hover:bg-red-500/20 border-white/20 hover:border-red-500/30"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-sm font-semibold">Logout</span>
+              {/* Hover effect */}
+              <div className="absolute inset-0 bg-gradient-to-r rounded-xl opacity-0 transition-opacity duration-300 from-red-500/10 to-red-500/10 group-hover:opacity-100 -z-10"></div>
+            </motion.button>
+          </div>
         </div>
       </div >
     </motion.nav >

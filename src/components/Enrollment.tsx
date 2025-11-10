@@ -13,7 +13,8 @@ import {
     Pause,
     RefreshCw,
     Fingerprint,
-    Shield
+    Shield,
+    Droplet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFaceRecognition } from '../hooks/useFaceRecognition';
@@ -600,6 +601,62 @@ const Enrollment: React.FC = () => {
                                                 {course}
                                             </option>
                                         ))}
+                                    </select>
+                                </div>
+
+                                {/* Father's Name */}
+                                <div>
+                                    <label className="flex gap-2 items-center mb-2 text-sm font-medium text-white">
+                                        <User className="w-4 h-4" />
+                                        Father's Name (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="fatherName"
+                                        value={formData.fatherName || ''}
+                                        onChange={handleInputChange}
+                                        className="px-4 py-3 w-full text-white rounded-xl border backdrop-blur-sm transition-all duration-300 placeholder-white/50 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
+                                        placeholder="Enter father's name"
+                                    />
+                                </div>
+
+                                {/* Mother's Name */}
+                                <div>
+                                    <label className="flex gap-2 items-center mb-2 text-sm font-medium text-white">
+                                        <User className="w-4 h-4" />
+                                        Mother's Name (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="motherName"
+                                        value={formData.motherName || ''}
+                                        onChange={handleInputChange}
+                                        className="px-4 py-3 w-full text-white rounded-xl border backdrop-blur-sm transition-all duration-300 placeholder-white/50 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
+                                        placeholder="Enter mother's name"
+                                    />
+                                </div>
+
+                                {/* Blood Group */}
+                                <div>
+                                    <label className="flex gap-2 items-center mb-2 text-sm font-medium text-white">
+                                        <Droplet className="w-4 h-4" />
+                                        Blood Group (Optional)
+                                    </label>
+                                    <select
+                                        name="bloodGroup"
+                                        value={formData.bloodGroup || ''}
+                                        onChange={handleInputChange}
+                                        className="px-4 py-3 w-full text-white rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/20"
+                                    >
+                                        <option value="" className="text-black">Select blood group</option>
+                                        <option value="A+" className="text-black">A+</option>
+                                        <option value="A-" className="text-black">A-</option>
+                                        <option value="B+" className="text-black">B+</option>
+                                        <option value="B-" className="text-black">B-</option>
+                                        <option value="AB+" className="text-black">AB+</option>
+                                        <option value="AB-" className="text-black">AB-</option>
+                                        <option value="O+" className="text-black">O+</option>
+                                        <option value="O-" className="text-black">O-</option>
                                     </select>
                                 </div>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User, Mail, Phone, BookOpen, Camera } from 'lucide-react';
+import { X, Save, User, Mail, Phone, BookOpen, Camera, Droplet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { apiService } from '../services/api';
 import { Student, UpdateStudentData, UpdateBiometricsData } from '../types';
@@ -27,7 +27,10 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
         name: student.name,
         email: student.email,
         phone: student.phone,
-        course: student.course
+        course: student.course,
+        fatherName: student.fatherName || '',
+        motherName: student.motherName || '',
+        bloodGroup: student.bloodGroup || ''
     });
 
     const [updating, setUpdating] = useState(false);
@@ -270,6 +273,68 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                                         {course}
                                                     </option>
                                                 ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Father's Name */}
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-white">
+                                            Father's Name
+                                        </label>
+                                        <div className="relative">
+                                            <User className="absolute top-3.5 left-3 w-5 h-5 text-white/50" />
+                                            <input
+                                                type="text"
+                                                name="fatherName"
+                                                value={formData.fatherName}
+                                                onChange={handleInputChange}
+                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                                placeholder="Enter father's name"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Mother's Name */}
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-white">
+                                            Mother's Name
+                                        </label>
+                                        <div className="relative">
+                                            <User className="absolute top-3.5 left-3 w-5 h-5 text-white/50" />
+                                            <input
+                                                type="text"
+                                                name="motherName"
+                                                value={formData.motherName}
+                                                onChange={handleInputChange}
+                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all placeholder-white/50 bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                                placeholder="Enter mother's name"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Blood Group */}
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-white">
+                                            Blood Group
+                                        </label>
+                                        <div className="relative">
+                                            <Droplet className="absolute top-3.5 left-3 w-5 h-5 text-white/50" />
+                                            <select
+                                                name="bloodGroup"
+                                                value={formData.bloodGroup}
+                                                onChange={handleInputChange}
+                                                className="py-3 pr-4 pl-10 w-full text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                                            >
+                                                <option value="" className="bg-slate-800">Select blood group</option>
+                                                <option value="A+" className="bg-slate-800">A+</option>
+                                                <option value="A-" className="bg-slate-800">A-</option>
+                                                <option value="B+" className="bg-slate-800">B+</option>
+                                                <option value="B-" className="bg-slate-800">B-</option>
+                                                <option value="AB+" className="bg-slate-800">AB+</option>
+                                                <option value="AB-" className="bg-slate-800">AB-</option>
+                                                <option value="O+" className="bg-slate-800">O+</option>
+                                                <option value="O-" className="bg-slate-800">O-</option>
                                             </select>
                                         </div>
                                     </div>

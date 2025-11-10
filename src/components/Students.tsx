@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
     Search,
-    Filter,
-    ChevronDown,
     Eye,
     UserX,
     UserCheck,
@@ -19,6 +17,7 @@ import { toast } from 'react-toastify';
 import { apiService } from '../services/api';
 import { StudentListItem } from '../types';
 import StudentDetail from './StudentDetail';
+import StudentIDCard from './StudentIDCard';
 import { useNavigate } from 'react-router-dom';
 
 const COURSES = [
@@ -41,6 +40,7 @@ const Students: React.FC = () => {
     const [selectedCourse, setSelectedCourse] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [biometricFilter, setBiometricFilter] = useState<'all' | 'face' | 'fingerprint'>('all');
+    const [attendanceFilter, setAttendanceFilter] = useState<'all' | 'excellent' | 'good' | 'average' | 'poor'>('all');
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -55,7 +55,6 @@ const Students: React.FC = () => {
     // Modals
     const [selectedStudent, setSelectedStudent] = useState<StudentListItem | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
     // Store all students from API
     const [allStudents, setAllStudents] = useState<StudentListItem[]>([]);
@@ -116,6 +115,25 @@ const Students: React.FC = () => {
             filteredData = filteredData.filter(s => s.biometricMethods.includes(biometricFilter));
         }
 
+        // Attendance percentage filter
+        if (attendanceFilter !== 'all') {
+            filteredData = filteredData.filter(s => {
+                const percentage = s.attendancePercentage;
+                switch (attendanceFilter) {
+                    case 'excellent':
+                        return percentage >= 90;
+                    case 'good':
+                        return percentage >= 70 && percentage < 90;
+                    case 'average':
+                        return percentage >= 50 && percentage < 70;
+                    case 'poor':
+                        return percentage < 50;
+                    default:
+                        return true;
+                }
+            });
+        }
+
         // Apply sorting
         filteredData.sort((a, b) => {
             let aValue: any = a[sortBy as keyof StudentListItem];
@@ -140,7 +158,7 @@ const Students: React.FC = () => {
         setStudents(paginatedData);
         setTotalStudents(filteredData.length);
         setTotalPages(Math.ceil(filteredData.length / studentsPerPage));
-    }, [allStudents, searchTerm, selectedCourse, statusFilter, biometricFilter, currentPage, sortBy, sortOrder, studentsPerPage]);
+    }, [allStudents, searchTerm, selectedCourse, statusFilter, biometricFilter, attendanceFilter, currentPage, sortBy, sortOrder, studentsPerPage]);
 
     // Fetch data on mount
     useEffect(() => {
@@ -175,18 +193,10 @@ const Students: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const clearFilters = () => {
-        setSearchTerm('');
-        setSelectedCourse('');
-        setStatusFilter('all');
-        setBiometricFilter('all');
-        setCurrentPage(1);
-    };
-
     // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, selectedCourse, statusFilter, biometricFilter]);
+    }, [searchTerm, selectedCourse, statusFilter, biometricFilter, attendanceFilter]);
 
     if (loading) {
         return (
@@ -219,7 +229,7 @@ const Students: React.FC = () => {
             </div>
 
             <div className="relative z-10 p-6">
-                <div className="mx-auto space-y-6 max-w-7xl">
+                <div className="overflow-visible mx-auto space-y-6 max-w-7xl">
                     {/* Header */}
                     <motion.div
                         initial={{ opacity: 0, y: -30 }}
@@ -330,7 +340,7 @@ const Students: React.FC = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
-                        className="p-6 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10"
+                        className="overflow-visible relative p-6 rounded-xl border backdrop-blur-sm bg-white/5 border-white/10"
                     >
                         <div className="flex flex-wrap gap-4 items-center">
                             {/* Search */}
@@ -368,69 +378,48 @@ const Students: React.FC = () => {
                             </select>
 
                             {/* Status Filter */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                                    className="inline-flex gap-2 items-center px-4 py-3 text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 hover:bg-white/10"
-                                >
-                                    <Filter className="w-5 h-5" />
-                                    Filters
-                                    <ChevronDown className="w-4 h-4" />
-                                </button>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value as 'all' | 'active' | 'inactive');
+                                    setCurrentPage(1);
+                                }}
+                                className="px-4 py-3 text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                            >
+                                <option value="all" className="bg-slate-800">All Status</option>
+                                <option value="active" className="bg-slate-800">Active Only</option>
+                                <option value="inactive" className="bg-slate-800">Inactive Only</option>
+                            </select>
 
-                                <AnimatePresence>
-                                    {showFilterDropdown && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="absolute right-0 z-50 p-4 mt-2 space-y-3 w-60 rounded-xl border shadow-lg backdrop-blur-sm bg-slate-900/95 border-white/20"
-                                        >
-                                            <div>
-                                                <label className="block mb-2 text-sm font-medium text-white">Status</label>
-                                                <select
-                                                    value={statusFilter}
-                                                    onChange={(e) => {
-                                                        setStatusFilter(e.target.value as any);
-                                                        setCurrentPage(1);
-                                                    }}
-                                                    className="px-3 py-2 w-full text-white rounded-lg border bg-white/5 border-white/10"
-                                                >
-                                                    <option value="all" className="bg-slate-800">All Status</option>
-                                                    <option value="active" className="bg-slate-800">Active Only</option>
-                                                    <option value="inactive" className="bg-slate-800">Inactive Only</option>
-                                                </select>
-                                            </div>
+                            {/* Biometric Filter */}
+                            <select
+                                value={biometricFilter}
+                                onChange={(e) => {
+                                    setBiometricFilter(e.target.value as 'all' | 'face' | 'fingerprint');
+                                    setCurrentPage(1);
+                                }}
+                                className="px-4 py-3 text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                            >
+                                <option value="all" className="bg-slate-800">All Methods</option>
+                                <option value="face" className="bg-slate-800">Face Only</option>
+                                <option value="fingerprint" className="bg-slate-800">Fingerprint Only</option>
+                            </select>
 
-                                            <div>
-                                                <label className="block mb-2 text-sm font-medium text-white">Biometric</label>
-                                                <select
-                                                    value={biometricFilter}
-                                                    onChange={(e) => {
-                                                        setBiometricFilter(e.target.value as any);
-                                                        setCurrentPage(1);
-                                                    }}
-                                                    className="px-3 py-2 w-full text-white rounded-lg border bg-white/5 border-white/10"
-                                                >
-                                                    <option value="all" className="bg-slate-800">All Methods</option>
-                                                    <option value="face" className="bg-slate-800">Face Only</option>
-                                                    <option value="fingerprint" className="bg-slate-800">Fingerprint Only</option>
-                                                </select>
-                                            </div>
-
-                                            <button
-                                                onClick={() => {
-                                                    clearFilters();
-                                                    setShowFilterDropdown(false);
-                                                }}
-                                                className="px-4 py-2 w-full text-sm font-medium text-white rounded-lg transition-colors bg-white/10 hover:bg-white/20"
-                                            >
-                                                Clear Filters
-                                            </button>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
+                            {/* Attendance Filter */}
+                            <select
+                                value={attendanceFilter}
+                                onChange={(e) => {
+                                    setAttendanceFilter(e.target.value as 'all' | 'excellent' | 'good' | 'average' | 'poor');
+                                    setCurrentPage(1);
+                                }}
+                                className="px-4 py-3 text-white rounded-lg border backdrop-blur-sm transition-all bg-white/5 border-white/10 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/50 focus:outline-none"
+                            >
+                                <option value="all" className="bg-slate-800">All Attendance</option>
+                                <option value="excellent" className="bg-slate-800">Excellent (≥90%)</option>
+                                <option value="good" className="bg-slate-800">Good (70-89%)</option>
+                                <option value="average" className="bg-slate-800">Average (50-69%)</option>
+                                <option value="poor" className="bg-slate-800">Poor (&lt;50%)</option>
+                            </select>
                         </div>
                     </motion.div>
 
@@ -576,6 +565,11 @@ const Students: React.FC = () => {
                                                             >
                                                                 <Eye className="w-4 h-4" />
                                                             </motion.button>
+                                                            <StudentIDCard
+                                                                student={student}
+                                                                ceoSignatureUrl={process.env.REACT_APP_CEO_SIGNATURE_URL}
+                                                                courseDirectorSignatureUrl={process.env.REACT_APP_COURSE_DIRECTOR_SIGNATURE_URL}
+                                                            />
                                                         </div>
                                                     </td>
                                                 </motion.tr>
