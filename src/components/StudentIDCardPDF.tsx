@@ -488,7 +488,7 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
   courseDirectorSignatureUrl,
   academyLogoUrl,
   academyAddress = 'Sagayapuram, 4/1, 12th Cross Rd, opp. A1 Function Hall, next to Citizen School, Richards Town, Bengaluru, Karnataka 560084',
-  academyPhone = '+91 7259795424',
+  academyPhone = '+91 9739481735',
   academyEmail = 'support@mca360.org',
   academyWebsite = 'www.mca360.org',
 }) => {
