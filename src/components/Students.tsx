@@ -11,13 +11,15 @@ import {
     RefreshCw,
     ChevronLeft,
     ChevronRight,
-    Plus
+    Plus,
+    Printer
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { apiService } from '../services/api';
 import { StudentListItem } from '../types';
 import StudentDetail from './StudentDetail';
 import StudentIDCard from './StudentIDCard';
+import { BulkPrintIDCardsModal } from './BulkPrintIDCardsModal';
 import { useNavigate } from 'react-router-dom';
 
 const COURSES = [
@@ -55,6 +57,7 @@ const Students: React.FC = () => {
     // Modals
     const [selectedStudent, setSelectedStudent] = useState<StudentListItem | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
 
     // Store all students from API
     const [allStudents, setAllStudents] = useState<StudentListItem[]>([]);
@@ -258,6 +261,17 @@ const Students: React.FC = () => {
                             >
                                 <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
                                 {refreshing ? 'Refreshing...' : 'Refresh'}
+                            </motion.button>
+
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setShowBulkPrintModal(true)}
+                                disabled={allStudents.length === 0}
+                                className="inline-flex gap-2 items-center px-4 py-2 text-white rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/10 border-white/20 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Printer className="w-5 h-5" />
+                                Bulk Print ID Cards
                             </motion.button>
 
                             <motion.button
@@ -655,6 +669,13 @@ const Students: React.FC = () => {
                     }}
                 />
             )}
+
+            {/* Bulk Print Modal */}
+            <BulkPrintIDCardsModal
+                isOpen={showBulkPrintModal}
+                onClose={() => setShowBulkPrintModal(false)}
+                students={allStudents}
+            />
         </div>
     );
 };

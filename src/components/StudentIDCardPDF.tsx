@@ -201,6 +201,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica',
     lineHeight: 1.3,
     flex: 1,
+    wordBreak: 'break-all',
+    maxWidth: '100%',
   },
   infoValueUppercase: {
     fontSize: '7pt',
@@ -582,7 +584,7 @@ export const StudentIDCardPDF: FC<StudentIDCardPDFProps> = ({
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Email</Text>
-                <Text style={styles.infoValue}>{student.email}</Text>
+                <Text style={[styles.infoValue, { fontSize: '6pt' }]}>{student.email}</Text>
               </View>
 
               <View style={styles.divider} />
