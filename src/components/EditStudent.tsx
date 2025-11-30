@@ -316,7 +316,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                     {/* Blood Group */}
                                     <div>
                                         <label className="block mb-2 text-sm font-medium text-white">
-                                            Blood Group
+                                            Blood Group (Optional)
                                         </label>
                                         <div className="relative">
                                             <Droplet className="absolute top-3.5 left-3 w-5 h-5 text-white/50" />

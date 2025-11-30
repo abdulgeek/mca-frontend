@@ -501,35 +501,23 @@ const FrontCard: FC<{
         </View>
         <View style={styles.divider} />
 
-        {student.fatherName && (
-          <>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Father's Name</Text>
-              <Text style={styles.infoValueUppercase}>{student.fatherName}</Text>
-            </View>
-            <View style={styles.divider} />
-          </>
-        )}
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Father's Name</Text>
+          <Text style={styles.infoValueUppercase}>{student.fatherName || 'N/A'}</Text>
+        </View>
+        <View style={styles.divider} />
 
-        {student.motherName && (
-          <>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Mother's Name</Text>
-              <Text style={styles.infoValueUppercase}>{student.motherName}</Text>
-            </View>
-            <View style={styles.divider} />
-          </>
-        )}
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Mother's Name</Text>
+          <Text style={styles.infoValueUppercase}>{student.motherName || 'N/A'}</Text>
+        </View>
+        <View style={styles.divider} />
 
-        {student.bloodGroup && (
-          <>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Blood Group</Text>
-              <Text style={styles.infoValueUppercase}>{student.bloodGroup}</Text>
-            </View>
-            <View style={styles.divider} />
-          </>
-        )}
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Blood Group</Text>
+          <Text style={styles.infoValueUppercase}>{student.bloodGroup || 'N/A'}</Text>
+        </View>
+        <View style={styles.divider} />
 
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Email</Text>
