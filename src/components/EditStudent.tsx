@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, User, Mail, Phone, BookOpen, Camera, Droplet } from 'lucide-react';
+import { X, Save, User, Mail, Phone, BookOpen, Camera, Droplet, Upload, Image as ImageIcon, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { apiService } from '../services/api';
 import { Student, UpdateStudentData, UpdateBiometricsData } from '../types';
 import { useFaceRecognition } from '../hooks/useFaceRecognition';
+import * as faceapi from 'face-api.js';
 
 interface EditStudentProps {
     student: Student;
@@ -35,6 +36,12 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
 
     const [updating, setUpdating] = useState(false);
     const [activeTab, setActiveTab] = useState<'basic' | 'biometric'>('basic');
+    const [captureMode, setCaptureMode] = useState<'camera' | 'upload'>('camera');
+    const [isValidatingImage, setIsValidatingImage] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [faceModelsLoaded, setFaceModelsLoaded] = useState(false);
+    const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
     const {
         videoRef,
@@ -46,6 +53,38 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
         capturedImage,
         clearCapturedImage
     } = useFaceRecognition();
+
+    // Use uploaded image if available, otherwise use captured image from hook
+    const currentImage = uploadedImage || capturedImage;
+
+    // Load face-api.js models for face detection
+    useEffect(() => {
+        const loadFaceModels = async () => {
+            try {
+                const MODEL_URL = '/models';
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+                setFaceModelsLoaded(true);
+                console.log('✅ Face-api.js models loaded successfully');
+            } catch (error) {
+                setFaceModelsLoaded(false);
+                console.warn('⚠️ Face-api.js models not found. Uploaded images will be accepted without strict face validation.');
+            }
+        };
+        loadFaceModels();
+    }, []);
+
+    // Start camera only when in camera mode
+    useEffect(() => {
+        if (activeTab === 'biometric' && captureMode === 'camera' && !capturedImage) {
+            // Don't auto-start camera, let user start it manually
+        } else if (captureMode === 'upload') {
+            stopCamera();
+        }
+    }, [captureMode, activeTab, capturedImage, stopCamera]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -97,17 +136,176 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
         }
     };
 
+    // Validate uploaded image with face detection
+    const validateUploadedImage = useCallback(async (file: File): Promise<{ valid: boolean; imageData: string | null; error?: string }> => {
+        setIsValidatingImage(true);
+        setUploadError(null);
+
+        try {
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+                return {
+                    valid: false,
+                    imageData: null,
+                    error: 'Invalid file type. Please upload a JPEG or PNG image.'
+                };
+            }
+
+            // Validate file size (max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                return {
+                    valid: false,
+                    imageData: null,
+                    error: 'File size too large. Please upload an image smaller than 5MB.'
+                };
+            }
+
+            // Convert file to base64
+            const imageData = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (e.target?.result) {
+                        resolve(e.target.result as string);
+                    } else {
+                        reject(new Error('Failed to read file'));
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            // Create image element for face detection
+            const img = new Image();
+            await new Promise<void>((resolve, reject) => {
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error('Failed to load image'));
+                img.src = imageData;
+            });
+
+            // Validate image dimensions (minimum 200x200 recommended)
+            if (img.width < 200 || img.height < 200) {
+                return {
+                    valid: false,
+                    imageData: null,
+                    error: 'Image too small. Please upload an image with at least 200x200 pixels.'
+                };
+            }
+
+            // Try to detect faces using face-api.js (only if models are loaded)
+            if (faceModelsLoaded) {
+                try {
+                    const detections = await faceapi
+                        .detectAllFaces(img, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks()
+                        .withFaceDescriptors();
+
+                    if (detections.length === 0) {
+                        return {
+                            valid: false,
+                            imageData: null,
+                            error: 'No face detected in the image. Please upload a photo with a clear face.'
+                        };
+                    }
+
+                    if (detections.length > 1) {
+                        return {
+                            valid: false,
+                            imageData: null,
+                            error: 'Multiple faces detected. Please upload a photo with only one person.'
+                        };
+                    }
+
+                    // Face detected successfully
+                    return {
+                        valid: true,
+                        imageData: imageData
+                    };
+                } catch (faceError) {
+                    // If face-api.js fails, still accept the image but warn
+                    console.warn('Face detection failed, accepting image anyway:', faceError);
+                    return {
+                        valid: true,
+                        imageData: imageData
+                    };
+                }
+            } else {
+                // Models not loaded, accept image without face validation
+                console.log('Face models not loaded, skipping face detection');
+                return {
+                    valid: true,
+                    imageData: imageData
+                };
+            }
+        } catch (error: any) {
+            return {
+                valid: false,
+                imageData: null,
+                error: error.message || 'Failed to process image. Please try again.'
+            };
+        } finally {
+            setIsValidatingImage(false);
+        }
+    }, [faceModelsLoaded]);
+
+    // Handle file upload
+    const handleFileUpload = useCallback(async (file: File) => {
+        const result = await validateUploadedImage(file);
+
+        if (result.valid && result.imageData) {
+            setUploadedImage(result.imageData);
+            setUploadError(null);
+            toast.success('Photo uploaded and validated successfully!');
+        } else {
+            setUploadError(result.error || 'Invalid image');
+            toast.error(result.error || 'Failed to upload image');
+        }
+    }, [validateUploadedImage]);
+
+    // Handle file input change
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    };
+
+    // Handle drag and drop
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    };
+
     const handleUpdateBiometrics = async () => {
         try {
             setUpdating(true);
 
-            if (!capturedImage) {
-                toast.error('Please capture a face image');
+            if (!currentImage) {
+                toast.error('Please capture or upload a face image');
                 return;
             }
 
             const biometricData: UpdateBiometricsData = {
-                faceImage: capturedImage
+                faceImage: currentImage
             };
 
             const response = await apiService.updateStudentBiometrics(student._id, biometricData);
@@ -115,6 +313,7 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
             if (response.success) {
                 toast.success('Biometric data updated successfully');
                 clearCapturedImage();
+                setUploadedImage(null);
                 onSuccess();
             } else {
                 toast.error(response.message || 'Failed to update biometric data');
@@ -132,6 +331,8 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
             stopCamera();
         }
         clearCapturedImage();
+        setUploadedImage(null);
+        setUploadError(null);
         onClose();
     };
 
@@ -365,99 +566,244 @@ const EditStudent: React.FC<EditStudentProps> = ({ student, isOpen, onClose, onS
                                 <div className="space-y-6">
                                     {/* Face Recognition */}
                                     <div>
-                                        <h3 className="mb-4 text-lg font-semibold text-white">Update Face Recognition</h3>
+                                        <div className="flex gap-3 items-center justify-between mb-4">
+                                            <h3 className="text-lg font-semibold text-white">Update Face Recognition</h3>
+
+                                            {/* Mode Toggle */}
+                                            <div className="flex gap-2 items-center p-1 rounded-xl border backdrop-blur-sm bg-white/5 border-white/20">
+                                                <motion.button
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => {
+                                                        setCaptureMode('camera');
+                                                        setUploadedImage(null);
+                                                        setUploadError(null);
+                                                    }}
+                                                    className={`flex gap-2 items-center px-4 py-2 rounded-lg transition-all duration-300 ${captureMode === 'camera'
+                                                        ? 'bg-blue-500/30 text-white shadow-lg'
+                                                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                                                        }`}
+                                                >
+                                                    <Camera className="w-4 h-4" />
+                                                    <span className="text-sm font-medium">Camera</span>
+                                                </motion.button>
+                                                <motion.button
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => {
+                                                        setCaptureMode('upload');
+                                                        setUploadedImage(null);
+                                                        setUploadError(null);
+                                                        stopCamera();
+                                                    }}
+                                                    className={`flex gap-2 items-center px-4 py-2 rounded-lg transition-all duration-300 ${captureMode === 'upload'
+                                                        ? 'bg-purple-500/30 text-white shadow-lg'
+                                                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                                                        }`}
+                                                >
+                                                    <Upload className="w-4 h-4" />
+                                                    <span className="text-sm font-medium">Upload</span>
+                                                </motion.button>
+                                            </div>
+                                        </div>
 
                                         <div className="space-y-4">
-                                            {/* Camera/Preview */}
-                                            <div className="overflow-hidden relative rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
-                                                {capturedImage ? (
-                                                    <img
-                                                        src={capturedImage}
-                                                        alt="Captured"
-                                                        className="object-cover w-full h-80"
-                                                    />
-                                                ) : (
-                                                    <>
-                                                        <video
-                                                            ref={videoRef}
-                                                            autoPlay
-                                                            playsInline
-                                                            muted
-                                                            className="object-cover w-full h-80 bg-slate-800"
+                                            {/* Camera/Upload Preview */}
+                                            {captureMode === 'camera' ? (
+                                                <div className="overflow-hidden relative rounded-xl border backdrop-blur-sm bg-white/5 border-white/10">
+                                                    {currentImage ? (
+                                                        <img
+                                                            src={currentImage}
+                                                            alt="Captured"
+                                                            className="object-cover w-full h-80"
                                                         />
-                                                        <canvas ref={canvasRef} className="hidden" />
-                                                    </>
-                                                )}
-                                                {!cameraState.isActive && !capturedImage && (
-                                                    <div className="flex absolute inset-0 justify-center items-center bg-slate-800/50">
-                                                        <div className="text-center">
-                                                            <Camera className="mx-auto mb-4 w-16 h-16 text-white/30" />
-                                                            <p className="text-white/70">Camera not started</p>
+                                                    ) : (
+                                                        <>
+                                                            <video
+                                                                ref={videoRef}
+                                                                autoPlay
+                                                                playsInline
+                                                                muted
+                                                                className="object-cover w-full h-80 bg-slate-800"
+                                                            />
+                                                            <canvas ref={canvasRef} className="hidden" />
+                                                        </>
+                                                    )}
+                                                    {!cameraState.isActive && !currentImage && (
+                                                        <div className="flex absolute inset-0 justify-center items-center bg-slate-800/50">
+                                                            <div className="text-center">
+                                                                <Camera className="mx-auto mb-4 w-16 h-16 text-white/30" />
+                                                                <p className="text-white/70">Camera not started</p>
+                                                            </div>
                                                         </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    onDragOver={handleDragOver}
+                                                    onDragLeave={handleDragLeave}
+                                                    onDrop={handleDrop}
+                                                    className={`overflow-hidden relative rounded-xl border backdrop-blur-sm bg-white/5 border-white/10 transition-all duration-300 ${isDragOver ? 'border-blue-400 bg-blue-500/20' : ''
+                                                        }`}
+                                                >
+                                                    {currentImage ? (
+                                                        <img
+                                                            src={currentImage}
+                                                            alt="Uploaded"
+                                                            className="object-cover w-full h-80"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex flex-col gap-4 justify-center items-center h-80 p-8">
+                                                            {isValidatingImage ? (
+                                                                <>
+                                                                    <Loader2 className="w-12 h-12 text-white animate-spin" />
+                                                                    <p className="text-lg font-semibold text-white">Validating image...</p>
+                                                                    <p className="text-sm text-center text-white/60">Checking for face detection</p>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="p-4 rounded-full bg-white/10">
+                                                                        <ImageIcon className="w-12 h-12 text-white/70" />
+                                                                    </div>
+                                                                    <div className="text-center">
+                                                                        <p className="text-lg font-semibold text-white mb-2">
+                                                                            {isDragOver ? 'Drop your photo here' : 'Upload Profile Photo'}
+                                                                        </p>
+                                                                        <p className="text-sm text-white/60 mb-4">
+                                                                            Drag and drop or click to browse
+                                                                        </p>
+                                                                        <p className="text-xs text-white/50">
+                                                                            JPEG or PNG, max 5MB, one face required
+                                                                        </p>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Hidden file input */}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/jpeg,image/jpg,image/png"
+                                                        onChange={handleFileInputChange}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        disabled={isValidatingImage}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {/* Error Message */}
+                                            {uploadError && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="p-4 rounded-xl border backdrop-blur-sm bg-red-500/20 border-red-500/30"
+                                                >
+                                                    <div className="flex gap-2 items-center">
+                                                        <AlertCircle className="w-5 h-5 text-red-300" />
+                                                        <p className="text-sm text-red-200">{uploadError}</p>
                                                     </div>
-                                                )}
-                                            </div>
+                                                </motion.div>
+                                            )}
 
-                                            {/* Camera Controls */}
+                                            {/* Controls */}
                                             <div className="flex gap-3">
-                                                {!cameraState.isActive && !capturedImage && (
-                                                    <motion.button
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        onClick={handleStartCamera}
-                                                        className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl"
-                                                    >
-                                                        <Camera className="w-5 h-5" />
-                                                        Start Camera
-                                                    </motion.button>
-                                                )}
+                                                {captureMode === 'camera' ? (
+                                                    !currentImage ? (
+                                                        <>
+                                                            {!cameraState.isActive && (
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    onClick={handleStartCamera}
+                                                                    className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl"
+                                                                >
+                                                                    <Camera className="w-5 h-5" />
+                                                                    Start Camera
+                                                                </motion.button>
+                                                            )}
 
-                                                {cameraState.isActive && !capturedImage && (
-                                                    <>
-                                                        <motion.button
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                            onClick={handleCaptureImage}
-                                                            className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl"
-                                                        >
-                                                            <Camera className="w-5 h-5" />
-                                                            Capture Image
-                                                        </motion.button>
-                                                        <motion.button
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                            onClick={stopCamera}
-                                                            className="px-6 py-3 font-medium text-white rounded-xl bg-white/10 hover:bg-white/20"
-                                                        >
-                                                            Cancel
-                                                        </motion.button>
-                                                    </>
-                                                )}
-
-                                                {capturedImage && (
-                                                    <>
-                                                        <motion.button
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                            onClick={() => {
-                                                                clearCapturedImage();
-                                                                handleStartCamera();
-                                                            }}
-                                                            className="px-6 py-3 font-medium text-white rounded-xl bg-white/10 hover:bg-white/20"
-                                                        >
-                                                            Retake
-                                                        </motion.button>
-                                                        <motion.button
-                                                            whileHover={{ scale: 1.05 }}
-                                                            whileTap={{ scale: 0.95 }}
-                                                            onClick={handleUpdateBiometrics}
-                                                            disabled={updating}
-                                                            className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl disabled:opacity-50"
-                                                        >
-                                                            <Save className="w-5 h-5" />
-                                                            {updating ? 'Updating...' : 'Update Biometric'}
-                                                        </motion.button>
-                                                    </>
+                                                            {cameraState.isActive && (
+                                                                <>
+                                                                    <motion.button
+                                                                        whileHover={{ scale: 1.05 }}
+                                                                        whileTap={{ scale: 0.95 }}
+                                                                        onClick={handleCaptureImage}
+                                                                        className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl"
+                                                                    >
+                                                                        <Camera className="w-5 h-5" />
+                                                                        Capture Image
+                                                                    </motion.button>
+                                                                    <motion.button
+                                                                        whileHover={{ scale: 1.05 }}
+                                                                        whileTap={{ scale: 0.95 }}
+                                                                        onClick={stopCamera}
+                                                                        className="px-6 py-3 font-medium text-white rounded-xl bg-white/10 hover:bg-white/20"
+                                                                    >
+                                                                        Cancel
+                                                                    </motion.button>
+                                                                </>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.05 }}
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={() => {
+                                                                    clearCapturedImage();
+                                                                    setUploadedImage(null);
+                                                                    handleStartCamera();
+                                                                }}
+                                                                className="px-6 py-3 font-medium text-white rounded-xl bg-white/10 hover:bg-white/20"
+                                                            >
+                                                                <RefreshCw className="w-5 h-5 inline mr-2" />
+                                                                Retake
+                                                            </motion.button>
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.05 }}
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={handleUpdateBiometrics}
+                                                                disabled={updating}
+                                                                className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl disabled:opacity-50"
+                                                            >
+                                                                <Save className="w-5 h-5" />
+                                                                {updating ? 'Updating...' : 'Update Biometric'}
+                                                            </motion.button>
+                                                        </>
+                                                    )
+                                                ) : (
+                                                    currentImage ? (
+                                                        <>
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.05 }}
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={() => {
+                                                                    setUploadedImage(null);
+                                                                    setUploadError(null);
+                                                                }}
+                                                                className="px-6 py-3 font-medium text-white rounded-xl bg-white/10 hover:bg-white/20"
+                                                            >
+                                                                <RefreshCw className="w-5 h-5 inline mr-2" />
+                                                                Remove
+                                                            </motion.button>
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.05 }}
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={handleUpdateBiometrics}
+                                                                disabled={updating}
+                                                                className="inline-flex flex-1 gap-2 justify-center items-center px-6 py-3 font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl disabled:opacity-50"
+                                                            >
+                                                                <Save className="w-5 h-5" />
+                                                                {updating ? 'Updating...' : 'Update Biometric'}
+                                                            </motion.button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex flex-1 gap-2 justify-center items-center px-6 py-3 text-sm text-white/60">
+                                                            <Upload className="w-5 h-5" />
+                                                            <span>Click the area above or drag & drop to upload</span>
+                                                        </div>
+                                                    )
                                                 )}
                                             </div>
 
