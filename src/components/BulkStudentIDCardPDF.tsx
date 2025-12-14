@@ -52,7 +52,7 @@ interface BulkStudentIDCardPDFProps {
   academyWebsite?: string;
 }
 
-// Standard ID Card Size (8.5cm × 5.5cm)
+// Standard ID Card Size (8.3cm × 5.2cm)
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
@@ -65,13 +65,13 @@ const styles = StyleSheet.create({
     gap: '3mm',
   },
   cardWrapper: {
-    width: '55mm',
-    height: '85mm',
+    width: '52mm',
+    height: '83mm',
     marginBottom: '3mm',
   },
   cardContainer: {
-    width: '55mm',
-    height: '85mm',
+    width: '52mm',
+    height: '83mm',
     backgroundColor: '#ffffff',
     borderRadius: '6pt',
     padding: 0,
@@ -258,8 +258,8 @@ const styles = StyleSheet.create({
   },
   // Backside Styles
   backsideContainer: {
-    width: '55mm',
-    height: '85mm',
+    width: '52mm',
+    height: '83mm',
     backgroundColor: '#ffffff',
     borderRadius: '6pt',
     padding: 0,

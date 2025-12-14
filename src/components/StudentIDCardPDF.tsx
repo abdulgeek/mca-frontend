@@ -52,7 +52,7 @@ interface StudentIDCardPDFProps {
   academyWebsite?: string;
 }
 
-// Professional Portrait ID Card Styles - Standard ID Card Size (8.5cm × 5.5cm)
+// Professional Portrait ID Card Styles - Standard ID Card Size (8.3cm × 5.2cm)
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardContainer: {
-    width: '55mm', // 5.5cm
-    height: '85mm', // 8.5cm
+    width: '52mm', // 5.2cm
+    height: '83mm', // 8.3cm
     backgroundColor: '#ffffff',
     borderRadius: '6pt',
     padding: 0,
@@ -270,8 +270,8 @@ const styles = StyleSheet.create({
   },
   // Backside Styles
   backsideContainer: {
-    width: '55mm',
-    height: '85mm',
+    width: '52mm',
+    height: '83mm',
     backgroundColor: '#ffffff',
     borderRadius: '6pt',
     padding: 0,
