@@ -1,41 +1,45 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { 
-  ApiResponse, 
-  EnrollStudentRequest, 
-  MarkAttendanceRequest, 
-  DashboardStats, 
-  Attendance, 
-  LoginStatusResponse, 
-  AbsentStudent, 
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import {
+  ApiResponse,
+  EnrollStudentRequestExtended,
+  MarkAttendanceRequest,
+  DashboardStats,
+  Attendance,
+  LoginStatusResponse,
+  AbsentStudent,
   FingerprintData,
+  ExternalFingerprintData,
+  SensorInfo,
   StudentListResponse,
   StudentDetail,
   UpdateStudentData,
   UpdateBiometricsData,
   AttendanceCalendarDay,
-  UpdateAttendanceData
-} from '../types';
+  UpdateAttendanceData,
+} from "../types";
 
 class ApiService {
-  private api: AxiosInstance;
+  public api: AxiosInstance;
 
   constructor() {
     this.api = axios.create({
-      baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+      baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
       timeout: 30000,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
-        console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        console.log(
+          `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`
+        );
         return config;
       },
       (error) => {
-        console.error('❌ API Request Error:', error);
+        console.error("❌ API Request Error:", error);
         return Promise.reject(error);
       }
     );
@@ -43,20 +47,27 @@ class ApiService {
     // Response interceptor
     this.api.interceptors.response.use(
       (response: AxiosResponse) => {
-        console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+        console.log(
+          `✅ API Response: ${response.status} ${response.config.url}`
+        );
         return response;
       },
       (error) => {
-        console.error('❌ API Response Error:', error.response?.data || error.message);
+        console.error(
+          "❌ API Response Error:",
+          error.response?.data || error.message
+        );
         return Promise.reject(error);
       }
     );
   }
 
   // Face Recognition APIs
-  async enrollStudent(data: EnrollStudentRequest): Promise<ApiResponse> {
+  async enrollStudent(
+    data: EnrollStudentRequestExtended
+  ): Promise<ApiResponse> {
     try {
-      const response = await this.api.post('/face-recognition/enroll', data);
+      const response = await this.api.post("/face-recognition/enroll", data);
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -65,16 +76,23 @@ class ApiService {
 
   async markAttendance(data: MarkAttendanceRequest): Promise<ApiResponse> {
     try {
-      const response = await this.api.post('/face-recognition/mark-attendance', data);
+      const response = await this.api.post(
+        "/face-recognition/mark-attendance",
+        data
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  async checkLoginStatus(faceImage: string): Promise<ApiResponse<LoginStatusResponse>> {
+  async checkLoginStatus(
+    faceImage: string
+  ): Promise<ApiResponse<LoginStatusResponse>> {
     try {
-      const response = await this.api.post('/face-recognition/check-status', { faceImage });
+      const response = await this.api.post("/face-recognition/check-status", {
+        faceImage,
+      });
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -83,38 +101,48 @@ class ApiService {
 
   async getAttendanceStats(): Promise<ApiResponse<DashboardStats>> {
     try {
-      const response = await this.api.get('/face-recognition/stats');
+      const response = await this.api.get("/face-recognition/stats");
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  async getStudentAttendance(studentId: string, startDate?: string, endDate?: string): Promise<ApiResponse<Attendance[]>> {
+  async getStudentAttendance(
+    studentId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ApiResponse<Attendance[]>> {
     try {
       const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      
-      const response = await this.api.get(`/face-recognition/student/${studentId}?${params.toString()}`);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+
+      const response = await this.api.get(
+        `/face-recognition/student/${studentId}?${params.toString()}`
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  async getAbsentStudents(date?: string): Promise<ApiResponse<{
-    date: string;
-    totalStudents: number;
-    presentCount: number;
-    absentCount: number;
-    absentStudents: AbsentStudent[];
-  }>> {
+  async getAbsentStudents(date?: string): Promise<
+    ApiResponse<{
+      date: string;
+      totalStudents: number;
+      presentCount: number;
+      absentCount: number;
+      absentStudents: AbsentStudent[];
+    }>
+  > {
     try {
       const params = new URLSearchParams();
-      if (date) params.append('date', date);
-      
-      const response = await this.api.get(`/face-recognition/absent-students?${params.toString()}`);
+      if (date) params.append("date", date);
+
+      const response = await this.api.get(
+        `/face-recognition/absent-students?${params.toString()}`
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -124,7 +152,7 @@ class ApiService {
   // Fingerprint APIs
   async generateChallenge(): Promise<ApiResponse<{ challenge: string }>> {
     try {
-      const response = await this.api.get('/fingerprint/challenge');
+      const response = await this.api.get("/fingerprint/challenge");
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -132,22 +160,91 @@ class ApiService {
   }
 
   async markAttendanceWithFingerprint(data: {
-    fingerprintData: FingerprintData;
+    fingerprintData: FingerprintData | ExternalFingerprintData;
+    fingerprintMode?: "webauthn" | "external";
     location?: string;
     notes?: string;
-    action?: 'auto' | 'login' | 'logout';
+    action?: "auto" | "login" | "logout";
   }): Promise<ApiResponse> {
     try {
-      const response = await this.api.post('/fingerprint/mark-attendance', data);
+      const response = await this.api.post(
+        "/fingerprint/mark-attendance",
+        data
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  async checkLoginStatusWithFingerprint(fingerprintData: FingerprintData): Promise<ApiResponse<LoginStatusResponse>> {
+  async checkLoginStatusWithFingerprint(
+    fingerprintData: FingerprintData
+  ): Promise<ApiResponse<LoginStatusResponse>> {
     try {
-      const response = await this.api.post('/fingerprint/check-status', { fingerprintData });
+      const response = await this.api.post("/fingerprint/check-status", {
+        fingerprintData,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  // External Sensor APIs
+  async enumerateSensors(): Promise<
+    ApiResponse<{ sensors: SensorInfo[]; count: number }>
+  > {
+    try {
+      const response = await this.api.get("/sensors/enumerate");
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async captureFingerprintFromSensor(data: {
+    sensorId: string;
+    options?: {
+      timeout?: number;
+      quality?: number;
+      maxRetries?: number;
+      captureMode?: "enrollment" | "verification";
+    };
+  }): Promise<ApiResponse<ExternalFingerprintData>> {
+    try {
+      const response = await this.api.post(
+        "/fingerprint/sensors/capture",
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async enrollExternalFingerprint(data: {
+    studentId: string;
+    externalFingerprintData: ExternalFingerprintData;
+  }): Promise<ApiResponse> {
+    try {
+      const response = await this.api.post("/fingerprint/sensors/enroll", data);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getSensorHealthStatus(): Promise<
+    ApiResponse<{
+      isHealthy: boolean;
+      sensorCount: number;
+      connectedCount: number;
+      errors: string[];
+      connectionStatus: Record<string, boolean>;
+    }>
+  > {
+    try {
+      const response = await this.api.get("/fingerprint/sensors/health");
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -157,7 +254,7 @@ class ApiService {
   // Health check
   async healthCheck(): Promise<ApiResponse> {
     try {
-      const response = await this.api.get('/health');
+      const response = await this.api.get("/health");
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -177,16 +274,19 @@ class ApiService {
   }): Promise<ApiResponse<StudentListResponse>> {
     try {
       const queryParams = new URLSearchParams();
-      if (params?.search) queryParams.append('search', params.search);
-      if (params?.course) queryParams.append('course', params.course);
-      if (params?.status) queryParams.append('status', params.status);
-      if (params?.biometricMethod) queryParams.append('biometricMethod', params.biometricMethod);
-      if (params?.page) queryParams.append('page', params.page.toString());
-      if (params?.limit) queryParams.append('limit', params.limit.toString());
-      if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
-      if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+      if (params?.search) queryParams.append("search", params.search);
+      if (params?.course) queryParams.append("course", params.course);
+      if (params?.status) queryParams.append("status", params.status);
+      if (params?.biometricMethod)
+        queryParams.append("biometricMethod", params.biometricMethod);
+      if (params?.page) queryParams.append("page", params.page.toString());
+      if (params?.limit) queryParams.append("limit", params.limit.toString());
+      if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+      if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
-      const response = await this.api.get(`/students?${queryParams.toString()}`);
+      const response = await this.api.get(
+        `/students?${queryParams.toString()}`
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -202,7 +302,10 @@ class ApiService {
     }
   }
 
-  async updateStudent(id: string, data: UpdateStudentData): Promise<ApiResponse> {
+  async updateStudent(
+    id: string,
+    data: UpdateStudentData
+  ): Promise<ApiResponse> {
     try {
       const response = await this.api.put(`/students/${id}`, data);
       return response.data;
@@ -211,7 +314,10 @@ class ApiService {
     }
   }
 
-  async updateStudentBiometrics(id: string, data: UpdateBiometricsData): Promise<ApiResponse> {
+  async updateStudentBiometrics(
+    id: string,
+    data: UpdateBiometricsData
+  ): Promise<ApiResponse> {
     try {
       const response = await this.api.put(`/students/${id}/biometrics`, data);
       return response.data;
@@ -229,20 +335,29 @@ class ApiService {
     }
   }
 
-  async getStudentCalendar(id: string, startDate?: string, endDate?: string): Promise<ApiResponse<AttendanceCalendarDay[]>> {
+  async getStudentCalendar(
+    id: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ApiResponse<AttendanceCalendarDay[]>> {
     try {
       const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
 
-      const response = await this.api.get(`/students/${id}/calendar?${params.toString()}`);
+      const response = await this.api.get(
+        `/students/${id}/calendar?${params.toString()}`
+      );
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
     }
   }
 
-  async updateAttendanceRecord(id: string, data: UpdateAttendanceData): Promise<ApiResponse> {
+  async updateAttendanceRecord(
+    id: string,
+    data: UpdateAttendanceData
+  ): Promise<ApiResponse> {
     try {
       const response = await this.api.put(`/students/attendance/${id}`, data);
       return response.data;
@@ -263,7 +378,7 @@ class ApiService {
   // PIN Authentication API
   async validatePin(pin: string): Promise<ApiResponse> {
     try {
-      const response = await this.api.post('/auth/validate-pin', { pin });
+      const response = await this.api.post("/auth/validate-pin", { pin });
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -273,15 +388,15 @@ class ApiService {
   private handleError(error: any): Error {
     if (error.response) {
       // Server responded with error status
-      const message = error.response.data?.message || 'Server error occurred';
+      const message = error.response.data?.message || "Server error occurred";
       const status = error.response.status;
       return new Error(`${status}: ${message}`);
     } else if (error.request) {
       // Request was made but no response received
-      return new Error('Network error: Unable to connect to server');
+      return new Error("Network error: Unable to connect to server");
     } else {
       // Something else happened
-      return new Error(error.message || 'An unexpected error occurred');
+      return new Error(error.message || "An unexpected error occurred");
     }
   }
 }

@@ -12,12 +12,22 @@ import {
     Pause,
     Fingerprint,
     Camera,
+    Usb,
+    Wifi,
+    WifiOff,
+    Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFaceRecognition } from '../hooks/useFaceRecognition';
 import { FingerprintService } from '../services/fingerprintService';
 import { apiService } from '../services/api';
-import { AttendanceResult, LoginStatusResponse } from '../types';
+import {
+    AttendanceResult,
+    LoginStatusResponse,
+    SensorEvent,
+    ExternalFingerprintState,
+    FingerprintModeState
+} from '../types';
 import { toast } from 'react-toastify';
 
 const SmartAttendance: React.FC = () => {
@@ -29,6 +39,26 @@ const SmartAttendance: React.FC = () => {
     const [biometricMethod, setBiometricMethod] = useState<'face' | 'fingerprint'>('face');
     const [isFingerprintSupported, setIsFingerprintSupported] = useState(false);
     const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // External fingerprint sensor state
+    const [externalSensorState, setExternalSensorState] = useState<ExternalFingerprintState>({
+        isConnecting: false,
+        isCapturing: false,
+        availableSensors: [],
+        selectedSensorId: null,
+        captureProgress: null,
+        sseConnected: false,
+        lastCaptureResult: null,
+        error: null
+    });
+
+    // Fingerprint mode state
+    const [fingerprintMode, setFingerprintMode] = useState<FingerprintModeState>({
+        currentMode: 'auto',
+        externalSensorsAvailable: false,
+        webauthnAvailable: false,
+        preferredMethod: null
+    });
 
     const {
         modelsLoaded,
@@ -61,6 +91,94 @@ const SmartAttendance: React.FC = () => {
         }
     }, [videoRef, canvasRef]);
 
+    // Load available external sensors
+    const loadAvailableSensors = useCallback(async () => {
+        try {
+            setExternalSensorState(prev => ({ ...prev, isConnecting: true }));
+            const sensors = await FingerprintService.enumerateSensors();
+            setExternalSensorState(prev => ({
+                ...prev,
+                availableSensors: sensors,
+                selectedSensorId: sensors.length > 0 ? sensors[0].id : null,
+                isConnecting: false
+            }));
+        } catch (error) {
+            console.error('Error loading sensors:', error);
+            setExternalSensorState(prev => ({
+                ...prev,
+                isConnecting: false,
+                error: 'Failed to load sensors'
+            }));
+        }
+    }, []);
+
+    // Connect to SSE for real-time sensor updates
+    const connectToSensorUpdates = useCallback(() => {
+        const sseConnection = FingerprintService.connectToSSE((event: SensorEvent) => {
+            handleSensorEvent(event);
+        });
+
+        if (sseConnection) {
+            setExternalSensorState(prev => ({ ...prev, sseConnected: true }));
+        }
+    }, []);
+
+    // Handle SSE sensor events
+    const handleSensorEvent = useCallback((event: SensorEvent) => {
+        switch (event.type) {
+            case 'initial_sensors':
+                if (event.data?.sensors) {
+                    setExternalSensorState(prev => ({
+                        ...prev,
+                        availableSensors: event.data.sensors,
+                        selectedSensorId: prev.selectedSensorId ||
+                            (event.data.sensors.length > 0 ? event.data.sensors[0].id : null)
+                    }));
+                }
+                break;
+
+            case 'capture_progress':
+                if (event.data && event.deviceId === externalSensorState.selectedSensorId) {
+                    setExternalSensorState(prev => ({
+                        ...prev,
+                        captureProgress: {
+                            quality: event.data.quality || 0,
+                            status: event.data.status || 'Processing...',
+                            attempt: event.data.attempt || 1,
+                            maxAttempts: event.data.maxAttempts || 3
+                        }
+                    }));
+                }
+                break;
+
+            case 'capture_complete':
+                if (event.deviceId === externalSensorState.selectedSensorId) {
+                    setExternalSensorState(prev => ({
+                        ...prev,
+                        isCapturing: false,
+                        captureProgress: null
+                    }));
+                }
+                break;
+
+            case 'error':
+                if (event.deviceId === externalSensorState.selectedSensorId) {
+                    setExternalSensorState(prev => ({
+                        ...prev,
+                        isCapturing: false,
+                        captureProgress: null,
+                        error: event.data?.message || 'Capture failed'
+                    }));
+                }
+                break;
+
+            case 'connected':
+            case 'disconnected':
+                loadAvailableSensors();
+                break;
+        }
+    }, [captureFrame, isCheckingStatus, cameraState.isActive]);
+
     // Check login status
     const checkLoginStatus = useCallback(async () => {
         if (!cameraState.isActive || isCheckingStatus) return;
@@ -91,8 +209,36 @@ const SmartAttendance: React.FC = () => {
     // Load models on mount and check fingerprint support
     useEffect(() => {
         const checkFingerprint = async () => {
-            const supported = await FingerprintService.isPlatformAuthenticatorAvailable();
-            setIsFingerprintSupported(supported);
+            // Check WebAuthn support
+            const webauthnSupported = await FingerprintService.isPlatformAuthenticatorAvailable();
+
+            // Check external sensors
+            const externalSensorsAvailable = await FingerprintService.hasExternalSensors();
+
+            setIsFingerprintSupported(webauthnSupported || externalSensorsAvailable);
+
+            setFingerprintMode(prev => ({
+                ...prev,
+                webauthnAvailable: webauthnSupported,
+                externalSensorsAvailable,
+                preferredMethod: externalSensorsAvailable ? 'external_sensor' :
+                    webauthnSupported ? 'webauthn' : null
+            }));
+
+            if (externalSensorsAvailable) {
+                toast.info('🔌 External fingerprint sensors available for enhanced security!', {
+                    autoClose: 3000,
+                    position: 'top-right'
+                });
+
+                // Load available sensors
+                loadAvailableSensors();
+
+                // Connect to SSE for real-time updates
+                connectToSensorUpdates();
+            } else if (webauthnSupported) {
+                console.log('WebAuthn fingerprint supported');
+            }
         };
 
         checkFingerprint();
@@ -104,8 +250,9 @@ const SmartAttendance: React.FC = () => {
         return () => {
             stopCamera();
             if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+            FingerprintService.disconnectSSE();
         };
-    }, [startCamera, stopCamera, biometricMethod]);
+    }, [startCamera, stopCamera, biometricMethod]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Update elapsed time for logged-in users
     useEffect(() => {
@@ -162,14 +309,16 @@ const SmartAttendance: React.FC = () => {
                     action: 'auto' // Let backend decide
                 });
             } else {
-                // Fingerprint authentication
-                toast.info('Place your finger on the sensor...');
-                const fingerprintData = await FingerprintService.authenticateFingerprint();
-
-                response = await apiService.markAttendanceWithFingerprint({
-                    fingerprintData,
-                    action: 'auto'
-                });
+                // Fingerprint authentication - use best available method
+                if (fingerprintMode.preferredMethod === 'external_sensor' && externalSensorState.availableSensors.length > 0) {
+                    // External sensor authentication
+                    response = await handleExternalSensorAuth();
+                } else if (fingerprintMode.webauthnAvailable) {
+                    // WebAuthn authentication
+                    response = await handleWebAuthnAuth();
+                } else {
+                    throw new Error('No fingerprint authentication method available');
+                }
             }
 
             if (response.success && response.data) {
@@ -240,6 +389,63 @@ const SmartAttendance: React.FC = () => {
             setIsProcessing(false);
         }
     }, [isProcessing, biometricMethod, cameraState.isActive, captureFrame]);
+
+    // Handle external sensor authentication
+    const handleExternalSensorAuth = async () => {
+        if (!externalSensorState.selectedSensorId) {
+            throw new Error('Please select a fingerprint sensor');
+        }
+
+        try {
+            setExternalSensorState(prev => ({ ...prev, isCapturing: true, error: null }));
+            toast.info('🔌 Place your finger on the external sensor...');
+
+            const fingerprintData = await FingerprintService.captureFromExternalSensor(
+                externalSensorState.selectedSensorId,
+                { captureMode: 'verification', quality: 70, maxRetries: 2 }
+            );
+
+            const response = await apiService.markAttendanceWithFingerprint({
+                fingerprintData,
+                fingerprintMode: 'external',
+                action: 'auto'
+            });
+
+            setExternalSensorState(prev => ({
+                ...prev,
+                isCapturing: false,
+                lastCaptureResult: fingerprintData,
+                captureProgress: null
+            }));
+
+            return response;
+        } catch (error: any) {
+            setExternalSensorState(prev => ({
+                ...prev,
+                isCapturing: false,
+                error: error.message,
+                captureProgress: null
+            }));
+            throw error;
+        }
+    };
+
+    // Handle WebAuthn authentication
+    const handleWebAuthnAuth = async () => {
+        try {
+            toast.info('👆 Place your finger on the built-in sensor...');
+            const fingerprintData = await FingerprintService.authenticateFingerprint();
+
+            return await apiService.markAttendanceWithFingerprint({
+                fingerprintData,
+                fingerprintMode: 'webauthn',
+                action: 'auto'
+            });
+        } catch (error: any) {
+            const message = FingerprintService.getErrorMessage(error);
+            throw new Error(message);
+        }
+    };
 
     const formatTime = (dateString?: string) => {
         if (!dateString) return 'N/A';
@@ -326,16 +532,42 @@ const SmartAttendance: React.FC = () => {
                                         } ${!isFingerprintSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <div className="flex gap-3 items-center">
-                                        <Fingerprint className="w-6 h-6 text-white" />
-                                        <div className="text-left">
-                                            <h4 className="font-bold text-white">Fingerprint</h4>
+                                        {fingerprintMode.externalSensorsAvailable ? (
+                                            <Usb className="w-6 h-6 text-white" />
+                                        ) : (
+                                            <Fingerprint className="w-6 h-6 text-white" />
+                                        )}
+                                        <div className="text-left flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-bold text-white">
+                                                    {fingerprintMode.externalSensorsAvailable ? 'External Sensor' : 'Fingerprint'}
+                                                </h4>
+                                                {fingerprintMode.externalSensorsAvailable && externalSensorState.sseConnected && (
+                                                    <Wifi className="w-3 h-3 text-green-400" />
+                                                )}
+                                                {fingerprintMode.externalSensorsAvailable && !externalSensorState.sseConnected && (
+                                                    <WifiOff className="w-3 h-3 text-red-400" />
+                                                )}
+                                            </div>
                                             <p className="text-sm text-white/70">
-                                                {isFingerprintSupported ? 'Touch sensor' : 'Not available'}
+                                                {!isFingerprintSupported ? 'Not available' :
+                                                    fingerprintMode.externalSensorsAvailable ?
+                                                        `${externalSensorState.availableSensors.length} sensor(s) available` :
+                                                        'Built-in sensor'
+                                                }
                                             </p>
                                         </div>
-                                        {biometricMethod === 'fingerprint' && (
-                                            <CheckCircle className="ml-auto w-5 h-5 text-green-400" />
-                                        )}
+                                        <div className="flex flex-col items-end gap-1">
+                                            {biometricMethod === 'fingerprint' && (
+                                                <CheckCircle className="w-5 h-5 text-green-400" />
+                                            )}
+                                            {fingerprintMode.externalSensorsAvailable && (
+                                                <div className="flex items-center gap-1">
+                                                    <Zap className="w-3 h-3 text-blue-400" />
+                                                    <span className="text-xs text-blue-400">Enhanced</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </motion.button>
                             </div>
@@ -369,10 +601,77 @@ const SmartAttendance: React.FC = () => {
                                                 <canvas ref={canvasRef} className="hidden" />
                                             </>
                                         ) : (
-                                            <div className="flex flex-col gap-4 justify-center items-center p-8 h-full bg-gradient-to-br from-purple-900/50 to-pink-900/50">
-                                                <Fingerprint className="w-32 h-32 animate-pulse text-white/50" />
-                                                <p className="text-xl font-bold text-white">Fingerprint Mode</p>
-                                                <p className="text-sm text-center text-white/70">Click the button below to authenticate</p>
+                                            <div className="flex flex-col gap-6 justify-center items-center p-8 h-full bg-gradient-to-br from-purple-900/50 to-pink-900/50">
+                                                {externalSensorState.isCapturing ? (
+                                                    <div className="flex flex-col gap-4 items-center">
+                                                        <div className="relative">
+                                                            <Usb className="w-32 h-32 text-blue-400 animate-pulse" />
+                                                            <Loader2 className="absolute -top-4 -right-4 w-12 h-12 text-blue-300 animate-spin" />
+                                                        </div>
+                                                        <p className="text-xl font-bold text-white">Capturing...</p>
+                                                        {externalSensorState.captureProgress && (
+                                                            <div className="text-center">
+                                                                <p className="text-sm text-white/80">{externalSensorState.captureProgress.status}</p>
+                                                                <div className="w-64 h-3 mt-2 bg-white/20 rounded-full">
+                                                                    <div
+                                                                        className="h-full bg-blue-400 rounded-full transition-all duration-300"
+                                                                        style={{ width: `${externalSensorState.captureProgress.quality}%` }}
+                                                                    />
+                                                                </div>
+                                                                <p className="text-xs mt-1 text-white/60">
+                                                                    Quality: {externalSensorState.captureProgress.quality}%
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-4 items-center">
+                                                        {fingerprintMode.externalSensorsAvailable ? (
+                                                            <Usb className="w-32 h-32 animate-pulse text-white/50" />
+                                                        ) : (
+                                                            <Fingerprint className="w-32 h-32 animate-pulse text-white/50" />
+                                                        )}
+                                                        <p className="text-xl font-bold text-white">
+                                                            {fingerprintMode.externalSensorsAvailable ? 'External Sensor Mode' : 'Fingerprint Mode'}
+                                                        </p>
+                                                        <p className="text-sm text-center text-white/70">
+                                                            {fingerprintMode.externalSensorsAvailable
+                                                                ? 'Enhanced security with external sensor'
+                                                                : 'Click the button below to authenticate'
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {/* Sensor Selection */}
+                                                {fingerprintMode.externalSensorsAvailable && !externalSensorState.isCapturing && (
+                                                    <div className="w-full max-w-md">
+                                                        <select
+                                                            value={externalSensorState.selectedSensorId || ''}
+                                                            onChange={(e) => setExternalSensorState(prev => ({
+                                                                ...prev,
+                                                                selectedSensorId: e.target.value
+                                                            }))}
+                                                            className="w-full p-3 text-white rounded-xl border shadow-lg bg-black/40 border-white/30 backdrop-blur-sm focus:border-purple-400 focus:outline-none"
+                                                        >
+                                                            {externalSensorState.availableSensors.map((sensor) => (
+                                                                <option key={sensor.id} value={sensor.id} className="bg-gray-800">
+                                                                    {sensor.name} ({sensor.status})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                )}
+
+                                                {/* Error Display */}
+                                                {externalSensorState.error && (
+                                                    <div className="p-3 text-sm text-red-200 rounded-lg bg-red-500/20 border border-red-500/30">
+                                                        <div className="flex gap-2 items-center">
+                                                            <AlertCircle className="w-4 h-4" />
+                                                            <span>{externalSensorState.error}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 

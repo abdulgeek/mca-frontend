@@ -14,7 +14,23 @@ export interface Student {
   fingerprintCredentialId?: string;
   fingerprintPublicKey?: string;
   fingerprintCounter?: number;
-  biometricMethods: ('face' | 'fingerprint')[];
+  // External fingerprint fields
+  externalFingerprintTemplate?: string;
+  externalFingerprintSensorType?: 'digital_persona' | 'zkteco' | 'mantra' | 'generic_hid';
+  fingerprintMode: 'external' | 'webauthn' | 'both';
+  externalFingerprintMetadata?: {
+    quality: number;
+    capturedAt: string;
+    sensorId: string;
+    templateVersion: string;
+    deviceInfo?: {
+      manufacturer: string;
+      model: string;
+      vendorId: number;
+      productId: number;
+    };
+  };
+  biometricMethods: ('face' | 'fingerprint' | 'external_fingerprint')[];
   isActive: boolean;
   enrolledAt: string;
   createdAt: string;
@@ -30,7 +46,13 @@ export interface Attendance {
   timeOut?: string;
   status: 'present' | 'absent';
   confidence?: number;
-  biometricMethod: 'face' | 'fingerprint';
+  biometricMethod: 'face' | 'fingerprint' | 'external_fingerprint';
+  fingerprintMode?: 'webauthn' | 'external';
+  sensorInfo?: {
+    sensorId: string;
+    sensorType: string;
+    quality: number;
+  };
   location: string;
   loginPhotoUrl?: string; // S3 URL for login photo
   logoutPhotoUrl?: string; // S3 URL for logout photo
@@ -195,7 +217,7 @@ export interface StudentListItem {
   motherName?: string;
   bloodGroup?: string;
   profileImageUrl?: string;
-  biometricMethods: ('face' | 'fingerprint')[];
+  biometricMethods: ('face' | 'fingerprint' | 'external_fingerprint')[];
   isActive: boolean;
   enrolledAt: string;
   attendancePercentage: number;
@@ -251,4 +273,113 @@ export interface UpdateAttendanceData {
   timeOut?: string;
   location?: string;
   notes?: string;
+}
+
+// ===== EXTERNAL FINGERPRINT SENSOR TYPES =====
+
+export interface ExternalFingerprintData {
+  template: string; // Base64 encoded fingerprint template
+  quality: number; // 0-100 quality score
+  sensorId: string; // Device identifier
+  sensorType: 'digital_persona' | 'zkteco' | 'mantra' | 'generic';
+  capturedAt: Date;
+  metadata?: {
+    width?: number;
+    height?: number;
+    dpi?: number;
+    templateVersion?: string;
+  };
+}
+
+export interface SensorInfo {
+  id: string;
+  name: string;
+  manufacturer: string;
+  type: string;
+  vendorId: number;
+  productId: number;
+  status: 'ready' | 'busy' | 'error';
+  capabilities?: string[];
+}
+
+export interface SensorEvent {
+  type: 'connected' | 'disconnected' | 'capture_progress' | 'capture_complete' | 'error' | 'initial_sensors' | 'heartbeat';
+  deviceId?: string;
+  data?: any;
+  timestamp: Date;
+}
+
+export interface CaptureOptions {
+  timeout?: number; // Capture timeout in ms
+  quality?: number; // Minimum quality threshold (0-100)
+  maxRetries?: number; // Maximum capture attempts
+  captureMode?: 'enrollment' | 'verification';
+}
+
+export interface SensorHealthStatus {
+  isHealthy: boolean;
+  sensorCount: number;
+  connectedCount: number;
+  errors: string[];
+  connectionStatus: Record<string, boolean>;
+}
+
+export interface SensorCapabilities {
+  canCapture: boolean;
+  canVerify: boolean;
+  canEnroll: boolean;
+  hasLiveDetection: boolean;
+  maxQuality: number;
+  supportedTemplateFormats: string[];
+}
+
+// Updated interfaces to support external fingerprint
+
+export interface EnrollStudentRequestExtended extends EnrollStudentRequest {
+  externalFingerprintData?: ExternalFingerprintData;
+  fingerprintMode?: 'external' | 'webauthn' | 'both';
+}
+
+export interface MarkAttendanceRequestExtended extends Omit<MarkAttendanceRequest, 'biometricMethod' | 'fingerprintData'> {
+  fingerprintData?: FingerprintData | ExternalFingerprintData;
+  biometricMethod: 'face' | 'fingerprint' | 'external_fingerprint';
+  fingerprintMode?: 'webauthn' | 'external';
+}
+
+export interface UpdateBiometricsDataExtended extends UpdateBiometricsData {
+  externalFingerprintData?: ExternalFingerprintData;
+  fingerprintMode?: 'external' | 'webauthn' | 'both';
+}
+
+export interface AttendanceCalendarDayExtended extends Omit<AttendanceCalendarDay, 'biometricMethod'> {
+  biometricMethod?: 'face' | 'fingerprint' | 'external_fingerprint';
+  sensorInfo?: {
+    sensorId: string;
+    sensorType: string;
+    quality: number;
+  };
+}
+
+// UI State types for external fingerprint
+export interface ExternalFingerprintState {
+  isConnecting: boolean;
+  isCapturing: boolean;
+  availableSensors: SensorInfo[];
+  selectedSensorId: string | null;
+  captureProgress: {
+    quality: number;
+    status: string;
+    attempt: number;
+    maxAttempts: number;
+  } | null;
+  sseConnected: boolean;
+  lastCaptureResult: ExternalFingerprintData | null;
+  error: string | null;
+}
+
+export interface FingerprintModeState {
+  currentMode: 'external_sensor' | 'webauthn' | 'auto';
+  externalSensorsAvailable: boolean;
+  webauthnAvailable: boolean;
+  preferredMethod: 'external_sensor' | 'webauthn' | null;
 }
